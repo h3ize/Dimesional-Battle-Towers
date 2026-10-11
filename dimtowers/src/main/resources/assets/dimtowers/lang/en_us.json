@@ -1,0 +1,12 @@
+{
+  "entity.dimtowers.tower_boss": "Ashen Tyrant",
+  "entity.dimtowers.tower_zombie": "Rotting Colossus",
+  "entity.dimtowers.tower_skeleton": "Bone Archon",
+  "entity.dimtowers.tower_piglin": "Gilded Warlord",
+  "advancement.dimtowers.enter_tower.title": "Towering Ambition",
+  "advancement.dimtowers.enter_tower.description": "Enter a Dimensional Tower",
+  "advancement.dimtowers.slay_boss.title": "Tower Slayer",
+  "advancement.dimtowers.slay_boss.description": "Slay a tower boss",
+  "advancement.dimtowers.slay_all_bosses.title": "Master of the Towers",
+  "advancement.dimtowers.slay_all_bosses.description": "Slay every type of tower boss"
+}
