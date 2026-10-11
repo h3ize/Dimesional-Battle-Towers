@@ -64,7 +64,7 @@ public final class BossKit {
         switch (weaponType) {
             case BOW -> {
                 weapon = new ItemStack(Items.BOW);
-                weapon.enchant(enchants.getOrThrow(Enchantments.POWER), 5);
+                weapon.enchant(enchants.getOrThrow(Enchantments.POWER), 8);
                 weapon.enchant(enchants.getOrThrow(Enchantments.PUNCH), 2);
             }
             case AXE -> {
@@ -93,7 +93,11 @@ public final class BossKit {
     @Nullable
     public static LivingEntity target(Mob mob) {
         LivingEntity t = mob.getTarget();
-        if (t == null) t = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
+        // Only Brain-based mobs (piglins) register ATTACK_TARGET. Goal-based mobs such as
+        // zombies and skeletons throw "Unregistered memory fetched" if asked for it.
+        if (t == null && mob instanceof AbstractPiglin) {
+            t = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
+        }
         return t;
     }
 
