@@ -1,0 +1,108 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:stone_bricks"
+    },
+    "title": {
+      "translate": "advancement.dimtowers.enter_tower.title"
+    },
+    "description": {
+      "translate": "advancement.dimtowers.enter_tower.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "minecraft:textures/gui/advancements/backgrounds/stone.png"
+  },
+  "criteria": {
+    "overworld": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:overworld_tower"
+            }
+          }
+        ]
+      }
+    },
+    "nether": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:nether_tower"
+            }
+          }
+        ]
+      }
+    },
+    "end": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:end_tower"
+            }
+          }
+        ]
+      }
+    },
+    "piglin": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:piglin_tower"
+            }
+          }
+        ]
+      }
+    },
+    "frozen": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:frozen_tower"
+            }
+          }
+        ]
+      }
+    },
+    "desert": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "structures": "dimtowers:desert_tower"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "overworld",
+      "nether",
+      "end",
+      "piglin",
+      "frozen",
+      "desert"
+    ]
+  ]
+}
