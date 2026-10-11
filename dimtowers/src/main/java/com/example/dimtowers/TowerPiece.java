@@ -15,6 +15,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CandleBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SlabBlock;
@@ -34,18 +35,26 @@ import java.util.List;
 
 public class TowerPiece extends StructurePiece {
     /** Distance between floors. */
-    static final int H = 10;
+    static final int H = 12;
     /** Spawner floors below the boss arena. */
     static final int FLOORS = 5;
-    /** Outer half-width of the shell (tower is 23 wide, ~27 with buttresses). */
-    static final int R = 13;
+    /** Outer half-width of the shell (tower is 31 wide, ~35 with buttresses). */
+    static final int R = 15;
+    /** Half-width of the usable interior (shell is two blocks thick). */
+    static final int I = R - 2;
+    /** Offset of the four interior pillars from the centre. */
+    static final int PIL = 7;
+    /** Window / wall-bay centres along each face. */
+    static final int[] WIN = {-12, -6, 0, 6, 12};
+    /** Interior and exterior pilaster positions along each face (between the windows). */
+    static final int[] PILASTER = {-9, -3, 3, 9};
 
     private final String themeId;
     private final int cx, cz, s0;
 
     public TowerPiece(String themeId, int cx, int cz, int s0) {
         super(DimensionalTowers.TOWER_PIECE.get(), 0,
-                new BoundingBox(cx - 19, s0 - 56, cz - 19, cx + 19, s0 + FLOORS * H + 22, cz + 19));
+                new BoundingBox(cx - (R + 4), s0 - 60, cz - (R + 4), cx + (R + 4), s0 + FLOORS * H + 24, cz + (R + 4)));
         this.themeId = themeId; this.cx = cx; this.cz = cz; this.s0 = s0;
     }
 
@@ -90,6 +99,10 @@ public class TowerPiece extends StructurePiece {
         final Theme t;
         final BlockState air = Blocks.AIR.defaultBlockState();
         final BlockState chain = Blocks.CHAIN.defaultBlockState();
+        final BlockState bookshelf = Blocks.BOOKSHELF.defaultBlockState();
+        final BlockState barrel = Blocks.BARREL.defaultBlockState();
+        final BlockState candle = Blocks.CANDLE.defaultBlockState()
+                .setValue(CandleBlock.CANDLES, 3).setValue(CandleBlock.LIT, Boolean.TRUE);
         final BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         final int yMax;
 
@@ -122,10 +135,22 @@ public class TowerPiece extends StructurePiece {
 
         BlockState wallBlock() { return rnd.nextInt(7) == 0 ? t.wallAlt : t.wall; }
 
+        /** Compass-rose floor with a diamond lattice and a trim border against the walls. */
         BlockState floorAt(int dx, int dz) {
             int r = Math.max(abs(dx), abs(dz));
+            int man = abs(dx) + abs(dz);
+            if (r == I) return t.trim;
             if (dx == 0 || dz == 0) return t.floorAlt;
-            return r % 3 == 0 ? t.floorAlt : t.floor;
+            if (man % 6 == 0) return t.floorAlt;
+            return t.floor;
+        }
+
+        BlockState carpet() {
+            return switch (t) {
+                case NETHER -> Blocks.BLACK_CARPET.defaultBlockState();
+                case END -> Blocks.PURPLE_CARPET.defaultBlockState();
+                default -> Blocks.RED_CARPET.defaultBlockState();
+            };
         }
 
         ResourceKey<LootTable> loot() {
@@ -196,67 +221,42 @@ public class TowerPiece extends StructurePiece {
                     + "required_player_range:12,target_cooldown_length:1200000}");
         }
 
-        /** Adds themed furniture and wall-side details to each usable floor. */
-        void decorateFloor(int k, int b) {
-            // Built-in seating and storage along the side walls, kept clear of stairs and chests.
-            for (int side : new int[]{-1, 1}) {
-                int x = side * 8;
-                set(x, b + 1, -4, Blocks.BARREL.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING,
-                        side < 0 ? Direction.EAST : Direction.WEST));
-                set(x, b + 1, 4, Blocks.CRAFTING_TABLE.defaultBlockState());
-                set(x, b + 2, 4, Blocks.LANTERN.defaultBlockState());
-                set(x, b + 1, -7, t.trim);
-                set(x, b + 2, -7, t.pillar);
-                set(x, b + 3, -7, t.light);
+        /** Interior pilasters between the windows on all four walls, from y0 up to y1. */
+        void interiorPilasters(int y0, int y1) {
+            for (int f = 0; f < 4; f++) for (int tt : PILASTER) {
+                fs(f, tt, I, y0, t.trim);
+                for (int y = y0 + 1; y < y1; y++) fs(f, tt, I, y, t.pillar);
+                fs(f, tt, I, y1, t.trim);
             }
+        }
 
-            // Every floor gets a patterned runner and small decorative corner details.
-            for (int x = -3; x <= 3; x++) {
-                if (x == 0) continue;
-                set(x, b + 1, 6, (Math.abs(x) % 2 == 0) ? t.accent : t.floorAlt);
-            }
-            set(-3, b + 1, -5, Blocks.FLOWER_POT.defaultBlockState());
-            set(3, b + 1, -5, Blocks.FLOWER_POT.defaultBlockState());
-
-            // Give each storey a distinct purpose and silhouette.
-            if (k == 0 || k == 1) {
-                for (int x : new int[]{-8, -7, 7, 8}) {
-                    set(x, b + 1, 2, Blocks.BOOKSHELF.defaultBlockState());
-                    set(x, b + 2, 2, Blocks.BOOKSHELF.defaultBlockState());
-                }
-                set(0, b + 1, -4, Blocks.CARTOGRAPHY_TABLE.defaultBlockState());
-                set(0, b + 2, -4, Blocks.LANTERN.defaultBlockState());
-            } else if (k == 2 || k == 3) {
-                set(-8, b + 1, 2, Blocks.ANVIL.defaultBlockState());
-                set(8, b + 1, 2, Blocks.GRINDSTONE.defaultBlockState());
-                set(-8, b + 1, -2, Blocks.SMITHING_TABLE.defaultBlockState());
-                set(8, b + 1, -2, Blocks.BREWING_STAND.defaultBlockState());
-                set(0, b + 1, -4, Blocks.CAULDRON.defaultBlockState());
-            } else {
-                set(-8, b + 1, 2, Blocks.ENDER_CHEST.defaultBlockState());
-                set(8, b + 1, 2, Blocks.ENCHANTING_TABLE.defaultBlockState());
-                set(0, b + 1, -4, Blocks.RESPAWN_ANCHOR.defaultBlockState());
-                set(0, b + 2, -4, t.light);
+        /** Corner brazier posts in the four inside corners. */
+        void cornerPosts(int b) {
+            for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
+                set(sx * I, b + 1, sz * I, t.trim);
+                set(sx * I, b + 2, sz * I, t.pillar);
+                set(sx * I, b + 3, sz * I, t.lanternStanding);
             }
         }
 
         void build() {
             final int sTop = s(FLOORS);
-            final int top = Math.min(sTop + 20, yMax);
+            final int top = Math.min(sTop + 22, yMax);
             final BlockState slabTop = t.slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
             final BlockState slabBot = t.slab.defaultBlockState();
             final BlockState wallPiece = t.wallPiece.defaultBlockState();
+            final BlockState carpet = carpet();
 
             // 1. clear the whole volume
-            for (int dx = -18; dx <= 18; dx++) for (int dz = -18; dz <= 18; dz++) {
+            for (int dx = -(R + 3); dx <= R + 3; dx++) for (int dz = -(R + 3); dz <= R + 3; dz++) {
                 if (!colInside(dx, dz)) continue;
                 for (int y = s0; y <= top; y++) clr(dx, y, dz);
             }
 
             // 2. tapered foundation down to the ground
-            for (int dx = -17; dx <= 17; dx++) for (int dz = -17; dz <= 17; dz++) {
+            for (int dx = -(R + 2); dx <= R + 2; dx++) for (int dz = -(R + 2); dz <= R + 2; dz++) {
                 if (!colInside(dx, dz)) continue;
-                int depth = 56 - 2 * Math.max(abs(dx), abs(dz));
+                int depth = 56 - 3 * Math.max(abs(dx), abs(dz));
                 for (int i = 0; i <= depth; i++) {
                     int y = s0 - i;
                     if (y < level.getMinBuildHeight()) break;
@@ -266,7 +266,7 @@ public class TowerPiece extends StructurePiece {
                 }
             }
 
-            // 3. floors (compass-rose pattern); k == FLOORS is the boss arena
+            // 3. floors (compass-rose + diamond pattern); k == FLOORS is the boss arena
             for (int k = 0; k <= FLOORS; k++)
                 for (int dx = -R; dx <= R; dx++) for (int dz = -R; dz <= R; dz++)
                     set(dx, s(k), dz, floorAt(dx, dz));
@@ -274,7 +274,7 @@ public class TowerPiece extends StructurePiece {
             // 4. double-thick walls with a plinth course, string courses and a crenellated parapet
             for (int y = s0 + 1; y <= sTop + 5; y++)
                 for (int dx = -R; dx <= R; dx++) for (int dz = -R; dz <= R; dz++) {
-                    if (Math.max(abs(dx), abs(dz)) < 12) continue;
+                    if (Math.max(abs(dx), abs(dz)) < R - 1) continue;
                     set(dx, y, dz, y == s0 + 1 ? t.plinth : wallBlock());
                 }
             for (int dx = -R; dx <= R; dx++) for (int dz = -R; dz <= R; dz++) {
@@ -283,85 +283,139 @@ public class TowerPiece extends StructurePiece {
                 if (((dx + dz) & 1) == 0) set(dx, sTop + 6, dz, t.wall);
             }
 
-            // 5. cornices (one per floor) and a low base ledge
-            for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) {
-                if (Math.max(abs(dx), abs(dz)) != 14) continue;
-                for (int k = 1; k <= FLOORS; k++) set(dx, s(k), dz, slabTop);
-                if (!(dz == 14 && abs(dx) <= 5)) set(dx, s0 + 1, dz, slabBot);
+            // 5. cornices (one per floor), a low base ledge and an outer apron step
+            for (int dx = -(R + 2); dx <= R + 2; dx++) for (int dz = -(R + 2); dz <= R + 2; dz++) {
+                int r = Math.max(abs(dx), abs(dz));
+                if (r == R + 1) {
+                    for (int k = 1; k <= FLOORS; k++) set(dx, s(k), dz, slabTop);
+                    if (!(dz == R + 1 && abs(dx) <= 4)) set(dx, s0 + 1, dz, slabBot);
+                } else if (r == R + 2) {
+                    if (!(dz == R + 2 && abs(dx) <= 4)) set(dx, s0 + 1, dz, slabBot);
+                }
             }
 
             // 6. pilasters on every face
-            for (int f = 0; f < 4; f++) for (int tt = -4; tt <= 4; tt += 8) {
-                for (int y = s0 + 1; y <= sTop + 5; y++) fs(f, tt, 14, y, t.pillar);
-                fs(f, tt, 14, sTop + 6, wallPiece);
+            for (int f = 0; f < 4; f++) for (int tt : PILASTER) {
+                for (int y = s0 + 1; y <= sTop + 5; y++) fs(f, tt, R + 1, y, t.pillar);
+                fs(f, tt, R + 1, sTop + 6, wallPiece);
             }
 
-            // 7. corner turrets with lantern spires
+            // 7. corner turrets with tall lantern spires
             for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
-                for (int ax = 12; ax <= 14; ax++) for (int az = 12; az <= 14; az++) {
-                    boolean corner = ax == 14 && az == 14;
+                for (int ax = R - 1; ax <= R + 1; ax++) for (int az = R - 1; az <= R + 1; az++) {
+                    boolean corner = ax == R + 1 && az == R + 1;
                     for (int y = s0 + 1; y <= sTop + 8; y++) set(sx * ax, y, sz * az, corner ? t.pillar : wallBlock());
                     set(sx * ax, sTop + 9, sz * az, t.trim);
-                    if (!(ax == 11 && az == 11)) set(sx * ax, sTop + 10, sz * az, slabBot);
+                    if (!(ax == R && az == R)) set(sx * ax, sTop + 10, sz * az, slabBot);
                 }
-                set(sx * 13, sTop + 10, sz * 13, t.pillar);
-                set(sx * 13, sTop + 11, sz * 13, t.pillar);
-                set(sx * 13, sTop + 12, sz * 13, wallPiece);
-                set(sx * 13, sTop + 13, sz * 13, t.light);
+                for (int y = sTop + 10; y <= sTop + 13; y++) set(sx * R, y, sz * R, t.pillar);
+                set(sx * R, sTop + 14, sz * R, wallPiece);
+                set(sx * R, sTop + 15, sz * R, t.light);
             }
 
-            // 8. tall arched windows (three per face per floor)
-            for (int k = 0; k < FLOORS; k++) for (int f = 0; f < 4; f++) for (int tt = -9; tt <= 9; tt += 9) {
+            // 8. tall arched windows (five per face per floor)
+            for (int k = 0; k < FLOORS; k++) for (int f = 0; f < 4; f++) for (int tt : WIN) {
                 if (k == 0 && f == 0 && tt == 0) continue; // the main door
                 int b = s(k);
                 for (int w = -1; w <= 1; w++) {
                     int c = tt + w;
-                    for (int y = b + 3; y <= b + 6; y++) { fs(f, c, 13, y, t.glass); fs(f, c, 12, y, air); }
-                    if (w == 0) { fs(f, c, 13, b + 7, t.glass); fs(f, c, 12, b + 7, air); }
-                    else fs(f, c, 13, b + 7, t.trim);
-                    fs(f, c, 13, b + 8, t.trim);
-                    fs(f, c, 13, b + 2, t.trim);
+                    for (int y = b + 3; y <= b + 8; y++) { fs(f, c, R, y, t.glass); fs(f, c, R - 1, y, air); }
+                    if (w == 0) { fs(f, c, R, b + 9, t.glass); fs(f, c, R - 1, b + 9, air); }
+                    else fs(f, c, R, b + 9, t.trim);
+                    fs(f, c, R, b + 10, t.trim);
+                    fs(f, c, R, b + 2, t.trim);
                 }
-                for (int y = b + 3; y <= b + 7; y++) { fs(f, tt - 2, 13, y, t.pillar); fs(f, tt + 2, 13, y, t.pillar); }
+                for (int y = b + 3; y <= b + 9; y++) {
+                    if (abs(tt - 2) < R - 1) fs(f, tt - 2, R, y, t.pillar);
+                    if (abs(tt + 2) < R - 1) fs(f, tt + 2, R, y, t.pillar);
+                }
             }
 
             // 9. grand entrance on the south face
-            for (int dx = -2; dx <= 2; dx++) for (int y = s0 + 1; y <= s0 + 6; y++) { clr(dx, y, 12); clr(dx, y, 13); }
-            for (int dx = -1; dx <= 1; dx++) { clr(dx, s0 + 7, 12); clr(dx, s0 + 7, 13); }
-            for (int z = 12; z <= 14; z++) {
-                set(-2, s0 + 7, z, t.trim); set(2, s0 + 7, z, t.trim);
-                for (int dx = -2; dx <= 2; dx++) set(dx, s0 + 8, z, t.trim);
-                for (int y = s0 + 1; y <= s0 + 8; y++) { set(-3, y, z, t.pillar); set(3, y, z, t.pillar); }
+            for (int dx = -2; dx <= 2; dx++) for (int y = s0 + 1; y <= s0 + 7; y++) { clr(dx, y, R - 1); clr(dx, y, R); }
+            for (int dx = -1; dx <= 1; dx++) { clr(dx, s0 + 8, R - 1); clr(dx, s0 + 8, R); }
+            for (int z = R - 1; z <= R + 1; z++) {
+                set(-2, s0 + 8, z, t.trim); set(2, s0 + 8, z, t.trim);
+                for (int dx = -2; dx <= 2; dx++) set(dx, s0 + 9, z, t.trim);
+                for (int y = s0 + 1; y <= s0 + 9; y++) { set(-3, y, z, t.pillar); set(3, y, z, t.pillar); }
             }
-            set(-3, s0 + 9, 14, t.light); set(3, s0 + 9, 14, t.light);
+            set(-3, s0 + 10, R + 1, t.light); set(3, s0 + 10, R + 1, t.light);
 
             // 10. interior floors
             for (int k = 0; k < FLOORS; k++) {
                 int b = s(k);
-                // pillars with glowing capitals
-                for (int sx = -6; sx <= 6; sx += 12) for (int sz = -6; sz <= 6; sz += 12) {
-                    for (int y = b + 1; y <= b + H - 1; y++) set(sx, y, sz, t.pillar);
+
+                // ceiling beams: a square through the pillars plus a cross through the middle
+                for (int i = -PIL; i <= PIL; i++) {
+                    set(i, b + H - 1, PIL, t.trim); set(i, b + H - 1, -PIL, t.trim);
+                    set(PIL, b + H - 1, i, t.trim); set(-PIL, b + H - 1, i, t.trim);
+                    set(i, b + H - 1, 0, t.trim);   set(0, b + H - 1, i, t.trim);
+                }
+
+                // pillars with a trim base and glowing capitals
+                for (int sx = -PIL; sx <= PIL; sx += 2 * PIL) for (int sz = -PIL; sz <= PIL; sz += 2 * PIL) {
+                    set(sx, b + 1, sz, t.trim);
+                    for (int y = b + 2; y <= b + H - 2; y++) set(sx, y, sz, t.pillar);
+                    set(sx, b + H - 1, sz, t.trim);
                     set(sx, b + H, sz, t.light);
                 }
-                // chandeliers
-                int[][] ch = {{0, 7}, {0, -7}, {7, 0}, {-7, 0}};
+
+                // chandeliers on the beam crossings, plus a big one over the spawner
+                int[][] ch = {{0, PIL}, {0, -PIL}, {PIL, 0}, {-PIL, 0}};
                 for (int[] c : ch) {
-                    set(c[0], b + H - 1, c[1], chain);
                     set(c[0], b + H - 2, c[1], chain);
-                    set(c[0], b + H - 3, c[1], t.lanternHanging);
+                    set(c[0], b + H - 3, c[1], chain);
+                    set(c[0], b + H - 4, c[1], t.lanternHanging);
                 }
-                // spawner dais
-                for (int sx = -2; sx <= 2; sx += 4) for (int sz = -2; sz <= 2; sz += 4) {
+                for (int y = b + H - 2; y >= b + H - 5; y--) set(0, y, 0, chain);
+                set(0, b + H - 6, 0, t.lanternHanging);
+
+                // carpet runner (leads in from the front door on the ground floor)
+                int zMax = k == 0 ? R : R - 5;
+                for (int dz = -(R - 5); dz <= zMax; dz++) {
+                    if (abs(dz) <= 3) continue;
+                    for (int dx = -1; dx <= 1; dx++) set(dx, b + 1, dz, carpet);
+                }
+
+                // spawner dais: layered floor medallion, slab collar and four lantern posts
+                for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
+                    int r = Math.max(abs(dx), abs(dz));
+                    set(dx, b, dz, r <= 1 ? t.accent : r == 2 ? t.floorAlt : t.trim);
+                    if (r == 1 && (dx != 0 || dz != 0)) set(dx, b + 1, dz, slabBot);
+                }
+                for (int sx = -3; sx <= 3; sx += 6) for (int sz = -3; sz <= 3; sz += 6) {
                     set(sx, b + 1, sz, t.trim);
-                    set(sx, b + 2, sz, t.lanternStanding);
+                    set(sx, b + 2, sz, t.pillar);
+                    set(sx, b + 3, sz, t.lanternStanding);
                 }
                 monsterSpawner(0, b + 1, 0);
 
-                // two-wide switchback staircase up to the next floor
+                // lantern posts flanking the runner
+                for (int sx = -3; sx <= 3; sx += 6) for (int sz = -6; sz <= 6; sz += 12) {
+                    set(sx, b + 1, sz, t.trim);
+                    set(sx, b + 2, sz, t.lanternStanding);
+                }
+
+                // wall pilasters, corner braziers
+                interiorPilasters(b + 1, b + H - 1);
+                cornerPosts(b);
+
+                // library nooks and barrels under each window, topped with candles
+                for (int f = 0; f < 4; f++) for (int tt : WIN) {
+                    if (k == 0 && f == 0 && tt == 0) continue;  // front door
+                    if (f >= 2 && tt == 0) continue;            // treasure chests
+                    BlockState base = rnd.nextInt(4) == 0 ? barrel : bookshelf;
+                    fs(f, tt, I, b + 1, base);
+                    fs(f, tt, I, b + 2, base);
+                    fs(f, tt, I, b + 3, candle);
+                }
+
+                // two-wide switchback staircase up to the next floor, with a baluster rail
                 boolean even = k % 2 == 0;
-                int zRow = even ? -10 : 10, zIn = even ? -9 : 9;
+                int zRow = even ? -(R - 3) : (R - 3), zIn = even ? -(R - 4) : (R - 4);
+                int zRail = even ? zIn + 1 : zIn - 1;
                 Direction dir = even ? Direction.EAST : Direction.WEST;
-                int startX = even ? -11 : 11, step = even ? 1 : -1;
+                int startX = even ? -(H - 1) : (H - 1), step = even ? 1 : -1;
                 BlockState stair = t.stairs.defaultBlockState().setValue(StairBlock.FACING, dir);
                 for (int i = 0; i < H; i++) {
                     int x = startX + step * i;
@@ -371,31 +425,37 @@ public class TowerPiece extends StructurePiece {
                         set(x, y, z, stair);
                         if (i < H - 1) clr(x, b + H, z);
                     }
+                    if (i < H - 1) set(x, y, zRail, wallPiece);
                 }
 
-                doubleChest(11, b + 1, 0, Direction.WEST);
-                doubleChest(-11, b + 1, 0, Direction.EAST);
-                decorateFloor(k, b);
+                doubleChest(I, b + 1, 0, Direction.WEST);
+                doubleChest(-I, b + 1, 0, Direction.EAST);
             }
 
             // 11. boss arena (open to the sky)
-            for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
+            for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
                 int r = Math.max(abs(dx), abs(dz));
-                set(dx, sTop, dz, r <= 1 ? t.accent : r == 2 ? t.floorAlt : t.trim);
+                set(dx, sTop, dz, r <= 1 ? t.accent : r == 2 ? t.floorAlt : r == 3 ? t.trim : r == 4 ? t.floorAlt : t.trim);
             }
             bossTrialSpawner(0, sTop + 1, 0);
-            for (int sx = -4; sx <= 4; sx += 8) for (int sz = -4; sz <= 4; sz += 8) {
+            for (int sx = -6; sx <= 6; sx += 12) for (int sz = -6; sz <= 6; sz += 12) {
                 for (int y = sTop + 1; y <= sTop + 3; y++) set(sx, y, sz, t.pillar);
                 set(sx, sTop + 4, sz, wallPiece);
                 set(sx, sTop + 5, sz, t.light);
             }
-            for (int f = 0; f < 4; f++) for (int tt = -9; tt <= 9; tt += 9) fs(f, tt, 10, sTop + 3, t.light);
+            // braziers at the four compass points of the dais
+            int[][] br = {{6, 0}, {-6, 0}, {0, 6}, {0, -6}};
+            for (int[] c : br) { set(c[0], sTop + 1, c[1], t.trim); set(c[0], sTop + 2, c[1], t.lanternStanding); }
+            // wall lights, pilasters and corner posts
+            for (int f = 0; f < 4; f++) for (int tt : WIN) fs(f, tt, R - 1, sTop + 3, t.light);
+            interiorPilasters(sTop + 1, sTop + 4);
+            cornerPosts(sTop);
 
             // vault on the south side, framed
-            for (int y = sTop + 1; y <= sTop + 3; y++) { set(-1, y, 9, t.pillar); set(1, y, 9, t.pillar); }
-            set(0, sTop + 2, 9, t.trim);
-            set(0, sTop + 3, 9, t.trim);
-            BlockPos vp = new BlockPos(cx, sTop + 1, cz + 9);
+            for (int y = sTop + 1; y <= sTop + 3; y++) { set(-1, y, I, t.pillar); set(1, y, I, t.pillar); }
+            set(0, sTop + 2, I, t.trim);
+            set(0, sTop + 3, I, t.trim);
+            BlockPos vp = new BlockPos(cx, sTop + 1, cz + I);
             if (sTop + 1 <= yMax && box.isInside(vp)) {
                 level.setBlock(vp, Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH), 2);
                 blockEntityNbt(vp, "{config:{key_item:{id:\"minecraft:ominous_trial_key\",count:1},"
@@ -403,7 +463,7 @@ public class TowerPiece extends StructurePiece {
             }
 
             // treasure chests
-            int[][] cp = {{8, 8, 0}, {-8, 8, 1}, {9, -3, 0}, {-9, -3, 1}};
+            int[][] cp = {{R - 3, R - 3, 0}, {-(R - 3), R - 3, 1}, {I, -6, 0}, {-I, -6, 1}};
             for (int[] c : cp) {
                 BlockPos p = new BlockPos(cx + c[0], sTop + 1, cz + c[1]);
                 if (sTop + 1 > yMax || !box.isInside(p)) continue;
