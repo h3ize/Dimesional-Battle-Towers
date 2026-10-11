@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+[[mods]]
+modId="dimtowers"
+version="1.0.0"
+displayName="Dimensional Towers"
+description='''Themed multi-floor towers in the Overworld, Nether and End with loot, a boss and a vault at the top.'''
+[[dependencies.dimtowers]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.dimtowers]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"

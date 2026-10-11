@@ -1,0 +1,34 @@
+{
+  "structures": [
+    {
+      "structure": "dimtowers:overworld_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:nether_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:end_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:piglin_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:frozen_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:desert_tower",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 12,
+    "salt": 1741852
+  }
+}
