@@ -1,5 +1,7 @@
 package com.example.dimtowers;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,11 +17,13 @@ import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
-/** 200 HP wither skeleton boss that throws fireballs and drops an ominous trial key. */
 public class TowerBoss extends WitherSkeleton {
     private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
@@ -36,14 +40,27 @@ public class TowerBoss extends WitherSkeleton {
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.8)
                 .add(Attributes.FOLLOW_RANGE, 48.0)
                 .add(Attributes.ARMOR, 10.0)
-                .add(Attributes.SCALE, 1.4);
+                .add(Attributes.SCALE, 2.0);
     }
 
     public void setup(Component name) {
         setCustomName(name);
         setCustomNameVisible(true);
-        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.NETHERITE_SWORD));
-        setDropChance(EquipmentSlot.MAINHAND, 0f);
+
+        var enchants = level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        Holder<Enchantment> sharpness = enchants.getOrThrow(Enchantments.SHARPNESS);
+        Holder<Enchantment> knockback = enchants.getOrThrow(Enchantments.KNOCKBACK);
+        ItemStack sword = new ItemStack(Items.NETHERITE_SWORD);
+        sword.enchant(sharpness, 5);
+        sword.enchant(knockback, 3);
+
+        setItemSlot(EquipmentSlot.MAINHAND, sword);
+        setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
+        setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.NETHERITE_CHESTPLATE));
+        setItemSlot(EquipmentSlot.LEGS, new ItemStack(Items.NETHERITE_LEGGINGS));
+        setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.NETHERITE_BOOTS));
+        for (EquipmentSlot slot : EquipmentSlot.values()) setDropChance(slot, 0f);
+
         setPersistenceRequired();
         setHealth(getMaxHealth());
     }
@@ -87,13 +104,13 @@ public class TowerBoss extends WitherSkeleton {
             if (t == null) return;
             if (--cooldown > 0) return;
             if (boss.distanceToSqr(t) < 16 || !boss.hasLineOfSight(t)) { cooldown = 10; return; }
-            cooldown = boss.getHealth() < boss.getMaxHealth() / 2 ? 45 : 80; // faster when below 50% HP
+            cooldown = boss.getHealth() < boss.getMaxHealth() / 2 ? 45 : 80;
             Level level = boss.level();
             double dx = t.getX() - boss.getX();
             double dy = t.getY(0.5) - boss.getY(0.5);
             double dz = t.getZ() - boss.getZ();
             for (int i = -1; i <= 1; i++) {
-                SmallFireball fb = new SmallFireball(level, boss, dx + i * 2.5, dy, dz - i * 2.5);
+                SmallFireball fb = new SmallFireball(level, boss, new Vec3(dx + i * 2.5, dy, dz - i * 2.5));
                 fb.setPos(boss.getX(), boss.getY(0.6), boss.getZ());
                 level.addFreshEntity(fb);
             }
