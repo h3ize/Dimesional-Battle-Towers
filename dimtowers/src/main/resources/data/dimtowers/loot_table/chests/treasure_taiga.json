@@ -51,7 +51,7 @@
               "function": "minecraft:set_lore",
               "lore": [
                 {
-                  "text": "Taken from a Boss Tower.",
+                  "text": "Taken from a Dimensional Battle Tower.",
                   "italic": true,
                   "color": "gold"
                 }
@@ -86,7 +86,7 @@
               "function": "minecraft:set_lore",
               "lore": [
                 {
-                  "text": "Taken from a Boss Tower.",
+                  "text": "Taken from a Dimensional Battle Tower.",
                   "italic": true,
                   "color": "gold"
                 }

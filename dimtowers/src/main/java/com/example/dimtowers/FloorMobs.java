@@ -1,6 +1,7 @@
 package com.example.dimtowers;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -65,6 +66,13 @@ public final class FloorMobs {
     public static final int FLOOR_COOLDOWN = 72000;
 
     /**
+     * Ticks between spawns on floor trial spawners (vanilla default 40, was 30). The spawner tops itself back up to its
+     * simultaneous-mob cap one mob per interval, so a tiny interval refills every killed mob almost instantly and
+     * two or more missing mobs come back together.
+     */
+    public static final int FLOOR_SPAWN_TICKS = 2;
+
+    /**
      * Towers generated before the cooldown change keep the old value baked into their spawner block entities, so fix
      * floor spawners (recognised by the dt_floor tag in their spawn data) whenever their chunk loads.
      */
@@ -76,8 +84,21 @@ public final class FloorMobs {
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
                     if (!(be instanceof TrialSpawnerBlockEntity)) continue;
                     CompoundTag tag = be.saveWithoutMetadata(level.registryAccess());
-                    if (tag.getInt("target_cooldown_length") == FLOOR_COOLDOWN || !tag.toString().contains("dt_floor")) continue;
-                    tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
+                    if (!tag.toString().contains("dt_floor")) continue;
+                    boolean changed = false;
+                    if (tag.getInt("target_cooldown_length") != FLOOR_COOLDOWN) {
+                        tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
+                        changed = true;
+                    }
+                    for (String key : new String[]{"normal_config", "ominous_config"}) {
+                        if (!tag.contains(key, Tag.TAG_COMPOUND)) continue;
+                        CompoundTag cfg = tag.getCompound(key);
+                        if (cfg.getInt("ticks_between_spawn") != FLOOR_SPAWN_TICKS) {
+                            cfg.putInt("ticks_between_spawn", FLOOR_SPAWN_TICKS);
+                            changed = true;
+                        }
+                    }
+                    if (!changed) continue;
                     be.loadWithComponents(tag, level.registryAccess());
                     be.setChanged();
                 }

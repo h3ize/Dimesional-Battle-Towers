@@ -81,13 +81,13 @@ public class TowerPiece extends StructurePiece {
     private final int cx, cz, s0;
 
     public TowerPiece(String themeId, int cx, int cz, int s0) {
-        super(DimensionalTowers.TOWER_PIECE.get(), 0,
+        super(DimensionalBattleTowers.TOWER_PIECE.get(), 0,
                 new BoundingBox(cx - (R + 4), s0 - 60, cz - (R + 4), cx + (R + 4), s0 + FLOORS * H + 24, cz + (R + 4)));
         this.themeId = themeId; this.cx = cx; this.cz = cz; this.s0 = s0;
     }
 
     public TowerPiece(StructurePieceSerializationContext ctx, CompoundTag tag) {
-        super(DimensionalTowers.TOWER_PIECE.get(), tag);
+        super(DimensionalBattleTowers.TOWER_PIECE.get(), tag);
         this.themeId = tag.getString("Theme");
         this.cx = tag.getInt("CX");
         this.cz = tag.getInt("CZ");
@@ -233,11 +233,11 @@ public class TowerPiece extends StructurePiece {
         /** Theme loot for the treasury floor, the four top-floor chests. */
         ResourceKey<LootTable> treasureKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
-                    ResourceLocation.fromNamespaceAndPath(DimensionalTowers.MOD_ID, "chests/treasure_" + t.id));
+                    ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/treasure_" + t.id));
         }
         ResourceKey<LootTable> barrelKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
-                    ResourceLocation.fromNamespaceAndPath(DimensionalTowers.MOD_ID, "chests/barrel"));
+                    ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/barrel"));
         }
         ResourceKey<LootTable> key(String p) {
             return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace(p));
@@ -335,7 +335,7 @@ public class TowerPiece extends StructurePiece {
             List<EntityType<?>> choices = t.mobsForFloor(k);
             EntityType<?> type = choices.get(rnd.nextInt(choices.size()));
             String config = "{spawn_range:6,total_mobs:" + TRIAL_TOTAL[k] + ".0f,simultaneous_mobs:" + TRIAL_SIMUL[k]
-                    + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:30,"
+                    + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:" + FloorMobs.FLOOR_SPAWN_TICKS + ","
                     + "spawn_potentials:[" + floorPotentials(type, k) + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config

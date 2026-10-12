@@ -34,8 +34,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
 
-@Mod(DimensionalTowers.MOD_ID)
-public class DimensionalTowers {
+@Mod(DimensionalBattleTowers.MOD_ID)
+public class DimensionalBattleTowers {
     public static final String MOD_ID = "dimtowers";
 
     public static final TagKey<Structure> TOWERS =
@@ -83,7 +83,7 @@ public class DimensionalTowers {
             ENTITIES.register("tower_drowned", () -> EntityType.Builder.<TowerDrowned>of(TowerDrowned::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_drowned"));
 
-    public DimensionalTowers(IEventBus modBus) {
+    public DimensionalBattleTowers(IEventBus modBus) {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
         ENTITIES.register(modBus);

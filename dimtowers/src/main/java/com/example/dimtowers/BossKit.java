@@ -231,7 +231,7 @@ public final class BossKit {
 
     /** True for any of this mod's boss entity types (minions are tagged dt_minion and never count as bosses). */
     private static boolean isTowerBoss(LivingEntity e) {
-        return BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getNamespace().equals(DimensionalTowers.MOD_ID)
+        return BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getNamespace().equals(DimensionalBattleTowers.MOD_ID)
                 && !e.getTags().contains("dt_minion");
     }
 
