@@ -21,6 +21,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.monster.Evoker;
@@ -572,6 +573,49 @@ class TowerSlime extends Slime {
         super.customServerAiStep();
         if (!this.getTags().contains("dt_ready")) this.setSize(KING_SIZE, true);
         BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_SLIME);
+        bossEvent.setProgress(getHealth() / getMaxHealth());
+        BossKit.tick(this);
+    }
+    @Override public void setCustomName(@Nullable Component n) {
+        super.setCustomName(n);
+        bossEvent.setName(getDisplayName());
+    }
+}
+
+/** Stationary shulker boss: fires the vanilla homing bullets, never teleports out of its arena. */
+class TowerShulker extends Shulker {
+    private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
+            BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
+
+    public TowerShulker(EntityType<? extends Shulker> type, Level level) {
+        super(type, level);
+        this.xpReward = BossKit.XP;
+    }
+
+    public static AttributeSupplier.Builder createBossAttributes() {
+        return BossKit.boost(Shulker.createAttributes(), BossKit.DMG_SHULKER);
+    }
+
+    @Override protected boolean teleportSomewhere() { return false; }
+
+    @Override protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BULLET_FAN, BossKit.Move.BULLET_NOVA, BossKit.Move.VOID_PULL));
+    }
+
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance diff, MobSpawnType type, @Nullable SpawnGroupData data) {
+        SpawnGroupData d = super.finalizeSpawn(level, diff, type, data);
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_SHULKER);
+        return d;
+    }
+
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
+    @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
+    @Override protected void customServerAiStep() {
+        super.customServerAiStep();
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_SHULKER);
         bossEvent.setProgress(getHealth() / getMaxHealth());
         BossKit.tick(this);
     }

@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.entity.DrownedRenderer;
 import net.minecraft.client.renderer.entity.EndermanRenderer;
 import net.minecraft.client.renderer.entity.EvokerRenderer;
 import net.minecraft.client.renderer.entity.GuardianRenderer;
+import net.minecraft.client.renderer.entity.ShulkerRenderer;
 import net.minecraft.client.renderer.entity.SkeletonRenderer;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.RavagerRenderer;
@@ -33,6 +34,7 @@ public class ClientSetup {
         e.registerEntityRenderer(DimensionalBattleTowers.TOWER_ENDER.get(), EndermanRenderer::new);
         e.registerEntityRenderer(DimensionalBattleTowers.TOWER_SLIME.get(), SlimeRenderer::new);
         e.registerEntityRenderer(DimensionalBattleTowers.TOWER_DROWNED.get(), DrownedRenderer::new);
+        e.registerEntityRenderer(DimensionalBattleTowers.TOWER_SHULKER.get(), ShulkerRenderer::new);
     }
 
     @SubscribeEvent

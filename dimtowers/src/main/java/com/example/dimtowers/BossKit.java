@@ -2,6 +2,7 @@ package com.example.dimtowers;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +37,7 @@ import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.entity.projectile.DragonFireball;
 import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.entity.projectile.LargeFireball;
+import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.entity.projectile.WitherSkull;
@@ -73,12 +75,15 @@ public final class BossKit {
         BLINK,
         DRAGON_BREATH,
         TRIDENT_FAN,
-        FANG_WAVE
+        FANG_WAVE,
+        BULLET_FAN,
+        BULLET_NOVA,
+        VOID_PULL
     }
 
     public static final double DMG_ZOMBIE = 18.0, DMG_SKELETON = 10.0, DMG_WITHER = 18.0, DMG_PIGLIN = 20.0,
             DMG_VINDICATOR = 20.0, DMG_BLAZE = 14.0, DMG_ENDER = 22.0, DMG_SLIME = 18.0,
-            DMG_DROWNED = 20.0, DMG_GUARDIAN = 20.0, DMG_EVOKER = 16.0, DMG_RAVAGER = 24.0;
+            DMG_DROWNED = 20.0, DMG_GUARDIAN = 20.0, DMG_EVOKER = 16.0, DMG_RAVAGER = 24.0, DMG_SHULKER = 20.0;
     public static final int XP = 3000;
 
     public static AttributeSupplier.Builder boost(AttributeSupplier.Builder b, double damage) {
@@ -376,6 +381,12 @@ public final class BossKit {
                     cd[i] = enraged ? 70 : 110;
                     return true;
                 }
+                case VOID_PULL -> {
+                    if (d2 > 576) return false;
+                    begin(i, 30, enraged ? 140 : 220);
+                    sound(sl, SoundEvents.SHULKER_OPEN, 2.0f, 0.5f);
+                    return true;
+                }
                 default -> { }
             }
 
@@ -447,6 +458,30 @@ public final class BossKit {
                     cd[i] = enraged ? 60 : 110;
                     return true;
                 }
+                case BULLET_FAN -> {
+                    int n = enraged ? 3 : 2;
+                    for (int j = -n; j <= n; j++) {
+                        ShulkerBullet b = new ShulkerBullet(level, boss, t, Direction.Axis.Y);
+                        b.setPos(boss.getX() + j * 0.8, boss.getY(1.2), boss.getZ());
+                        level.addFreshEntity(b);
+                    }
+                    sound(sl, SoundEvents.SHULKER_SHOOT, 2.0f, 0.7f);
+                    cd[i] = enraged ? 60 : 110;
+                    return true;
+                }
+                case BULLET_NOVA -> {
+                    int n = enraged ? 12 : 8;
+                    for (int j = 0; j < n; j++) {
+                        double a = j * Math.PI * 2.0 / n;
+                        ShulkerBullet b = new ShulkerBullet(level, boss, t, Direction.Axis.Y);
+                        b.setPos(boss.getX() + Math.cos(a) * 1.8, boss.getY(0.8), boss.getZ() + Math.sin(a) * 1.8);
+                        level.addFreshEntity(b);
+                    }
+                    sound(sl, SoundEvents.SHULKER_SHOOT, 2.0f, 0.5f);
+                    sl.sendParticles(ParticleTypes.END_ROD, boss.getX(), boss.getY(1.0), boss.getZ(), 30, 1.2, 0.8, 1.2, 0.05);
+                    cd[i] = enraged ? 120 : 200;
+                    return true;
+                }
                 case FANG_WAVE -> {
                     double dx = t.getX() - boss.getX(), dz = t.getZ() - boss.getZ();
                     double len = Math.sqrt(dx * dx + dz * dz);
@@ -476,6 +511,7 @@ public final class BossKit {
         private void execute(int idx, ServerLevel sl, LivingEntity t, boolean enraged) {
             switch (moves[idx]) {
                 case GROUND_SLAM -> slam(sl, enraged ? 11.0 : 8.0, enraged ? 18f : 12f);
+                case VOID_PULL -> voidPull(sl, enraged ? 24.0 : 18.0, enraged);
                 case LEAP -> {
                     Vec3 d = new Vec3(t.getX() - boss.getX(), 0, t.getZ() - boss.getZ());
                     double len = d.length();
@@ -487,6 +523,29 @@ public final class BossKit {
                 }
                 default -> { }
             }
+        }
+
+        /** Drags every non-monster within the radius toward the boss, hurting them; enraged pulls also lift them with Levitation. */
+        private void voidPull(ServerLevel sl, double radius, boolean enraged) {
+            Vec3 c = boss.position();
+            List<LivingEntity> list = sl.getEntitiesOfClass(LivingEntity.class,
+                    boss.getBoundingBox().inflate(radius, radius, radius),
+                    e -> e != boss && e.isAlive() && !(e instanceof Enemy));
+            for (LivingEntity e : list) {
+                if (e.distanceToSqr(boss) > radius * radius) continue;
+                Vec3 toward = c.subtract(e.position());
+                if (toward.lengthSqr() < 1.0E-4) continue;
+                toward = toward.normalize();
+                e.hurt(sl.damageSources().mobAttack(boss), enraged ? 14f : 8f);
+                e.setDeltaMovement(toward.x * 1.6, 0.35, toward.z * 1.6);
+                e.hurtMarked = true;
+                if (enraged) e.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 60, 1));
+            }
+            for (int i = 0; i < 40; i++) {
+                double a = i * Math.PI / 20.0;
+                sl.sendParticles(ParticleTypes.PORTAL, c.x + Math.cos(a) * radius * 0.6, c.y + 1.0, c.z + Math.sin(a) * radius * 0.6, 3, 0.2, 0.5, 0.2, 0.6);
+            }
+            sound(sl, SoundEvents.SHULKER_CLOSE, 2.0f, 0.5f);
         }
 
         /** Shockwave: damages and launches everything that is not a monster within the radius. */

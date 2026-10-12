@@ -93,6 +93,10 @@ public class DimensionalBattleTowers {
             ENTITIES.register("tower_drowned", () -> EntityType.Builder.<TowerDrowned>of(TowerDrowned::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_drowned"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerShulker>> TOWER_SHULKER =
+            ENTITIES.register("tower_shulker", () -> EntityType.Builder.<TowerShulker>of(TowerShulker::new, MobCategory.MONSTER)
+                    .sized(1.0F, 1.0F).fireImmune().clientTrackingRange(10).build("tower_shulker"));
+
     public DimensionalBattleTowers(IEventBus modBus) {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
@@ -132,6 +136,7 @@ public class DimensionalBattleTowers {
         e.put(TOWER_ENDER.get(), TowerEnder.createBossAttributes().build());
         e.put(TOWER_SLIME.get(), TowerSlime.createBossAttributes().build());
         e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());
+        e.put(TOWER_SHULKER.get(), TowerShulker.createBossAttributes().build());
     }
 
     private static final class StructureMapTrade implements VillagerTrades.ItemListing {

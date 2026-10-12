@@ -471,17 +471,47 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Tower position along the wall of floor k's vault: floor 1 sits beside the entrance door, the rest are centred. */
-        int vaultTt(int k) { return k == 0 ? 6 : 0; }
+        /** Tower position along the wall of floor k's vault: floor 1 has its vault in front of the shulker boss, the rest are centred. */
+        int vaultTt(int k) { return k == 0 ? 99 : 0; }
 
         /** Every floor's vault (opens with the key the floor's Trial Spawner ejects), framed like the boss vault. */
         void floorVault(int k, int b, int vf) {
+            if (k == 0) { shulkerCorner(b); return; }
             int vt = vaultTt(k);
             for (int y = b + 1; y <= b + 3; y++) { fs(vf, vt - 1, I, y, t.pillar); fs(vf, vt + 1, I, y, t.pillar); }
             fs(vf, vt, I, b + 2, t.trim);
             fs(vf, vt, I, b + 3, t.trim);
             setBe(pfs(vf, vt, I, b + 1), Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, inward(vf)),
                     "{config:{key_item:{id:'minecraft:trial_key',count:1},loot_table:'dimtowers:vault/floor_" + t.id + "'}}");
+        }
+
+        /** First floor: a Shulker boss spawner at the back with the floor vault standing in front of it, facing the entrance. */
+        void shulkerCorner(int b) {
+            final int vx = 5, vz = -8, sz = -11;
+            for (int y = b + 1; y <= b + 3; y++) { set(vx - 1, y, vz, t.pillar); set(vx + 1, y, vz, t.pillar); }
+            set(vx, b + 3, vz, t.trim);
+            set(vx - 1, b + 1, sz, t.trim);
+            set(vx + 1, b + 1, sz, t.trim);
+            set(vx - 1, b + 2, sz, t.lanternStanding);
+            set(vx + 1, b + 2, sz, t.lanternStanding);
+            setBe(new BlockPos(cx + vx, b + 1, cz + vz), Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH),
+                    "{config:{key_item:{id:'minecraft:trial_key',count:1},loot_table:'dimtowers:vault/floor_" + t.id + "'}}");
+            shulkerTrialSpawner(vx, b + 1, sz);
+        }
+
+        /** Trial Spawner for a single Shulker boss with a reduced health pool; ejects a regular trial key. */
+        void shulkerTrialSpawner(int dx, int y, int dz) {
+            BlockPos p = new BlockPos(cx + dx, y, cz + dz);
+            if (y > yMax || !box.isInside(p)) return;
+            level.setBlock(p, Blocks.TRIAL_SPAWNER.defaultBlockState(), 2);
+            String pot = "{weight:1,data:{entity:{id:'dimtowers:tower_shulker',Tags:['" + t.bossTag() + "'],"
+                    + "attributes:[{id:'minecraft:generic.max_health',base:250.0d}],Health:250.0f}}}";
+            String config = "{spawn_range:2,total_mobs:1.0f,simultaneous_mobs:1.0f,"
+                    + "total_mobs_added_per_player:0.0f,simultaneous_mobs_added_per_player:0.0f,ticks_between_spawn:40,"
+                    + "spawn_potentials:[" + pot + "],"
+                    + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
+            blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
+                    + ",required_player_range:14,target_cooldown_length:" + SPAWNER_COOLDOWN + "}");
         }
 
         /** Interior pilasters between the windows on all four walls, from y0 up to y1. */
