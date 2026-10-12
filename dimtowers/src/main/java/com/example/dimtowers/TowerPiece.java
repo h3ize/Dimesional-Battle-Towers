@@ -209,6 +209,7 @@ public class TowerPiece extends StructurePiece {
             BlockState st = t.stairs.defaultBlockState().setValue(StairBlock.FACING, facing);
             return upsideDown ? st.setValue(BlockStateProperties.HALF, Half.TOP) : st;
         }
+        BlockState slabDouble() { return t.slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.DOUBLE); }
         BlockState slabTop() { return t.slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP); }
         Direction dirOf(int ddx, int ddz) {
             if (ddx != 0) return ddx > 0 ? Direction.EAST : Direction.WEST;
@@ -425,7 +426,7 @@ public class TowerPiece extends StructurePiece {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
                 switch (i % 4) {
                     case 0, 2 -> armorStand(x, b + 1, z);
-                    case 1 -> { set(x, b + 1, z, slabTop()); set(x, b + 2, z, candle); }
+                    case 1 -> { set(x, b + 1, z, slabDouble()); set(x, b + 2, z, candle); }
                     default -> propBarrel(x, b + 1, z);
                 }
             }
@@ -442,7 +443,7 @@ public class TowerPiece extends StructurePiece {
                         set(x, b + 1, z, Blocks.LECTERN.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, toRoom));
                         for (int y = b + 1; y <= b + 3; y++) set(side * I, y, z, bookshelf);
                     }
-                    case 1 -> { set(x, b + 1, z, slabTop()); set(x, b + 2, z, candle); }
+                    case 1 -> { set(x, b + 1, z, slabDouble()); set(x, b + 2, z, candle); }
                     case 2 -> { for (int y = b + 1; y <= b + 3; y++) set(x, y, z, bookshelf); }
                     default -> {
                         BlockState cb = Blocks.CHISELED_BOOKSHELF.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, toRoom);
@@ -538,6 +539,14 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
+        /** True if (dx, dz) lies in the footprint of floor k's staircase (nothing should be laid under it). */
+        boolean underStairs(int k, int dx, int dz) {
+            boolean even = k % 2 == 0;
+            int zRow = even ? -(R - 3) : (R - 3), zIn = even ? -(R - 4) : (R - 4);
+            int x0 = even ? -(H - 1) : 0, x1 = even ? 0 : (H - 1);
+            return (dz == zRow || dz == zIn) && dx >= x0 && dx <= x1;
+        }
+
         /** Runners, a patterned ring round the dais and bordered rugs under each group of props. */
         void carpets(int b, int k) {
             BlockState main = carpet(), alt = carpetAlt();
@@ -550,10 +559,15 @@ public class TowerPiece extends StructurePiece {
                     set(sx * x, b + 1, sz * z, edge ? alt : main);
                 }
             }
-            int zMax = k == 0 ? R : R - 6;
-            for (int dz = -(R - 6); dz <= zMax; dz++) {
+            // North-south runner: runs right up to the far wall; on the staircase side it only gets one extra block.
+            final int stairSign = k % 2 == 0 ? -1 : 1;
+            for (int dz = -(I - 1); dz <= (k == 0 ? R : I - 1); dz++) {
                 if (abs(dz) <= 3) continue;
-                for (int dx = -1; dx <= 1; dx++) set(dx, b + 1, dz, dx == 0 ? main : alt);
+                if (Integer.signum(dz) == stairSign && abs(dz) > R - 5) continue;
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (underStairs(k, dx, dz)) continue;
+                    set(dx, b + 1, dz, dx == 0 ? main : alt);
+                }
             }
             for (int dx = -(I - 1); dx <= I - 1; dx++) {
                 if (abs(dx) <= 3) continue;
