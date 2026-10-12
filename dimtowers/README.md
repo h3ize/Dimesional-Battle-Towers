@@ -62,3 +62,12 @@ Large themed boss towerseach
 ## Advancements
 Towering Ambition, Tower Slayer, Master of the Towers (all ten boss types), Tower Cartographer (visit all 19 tower types),
 Keyring (open a vault with a trial key and an ominous trial key).
+
+
+## Build
+```
+gradle wrapper
+./gradlew build
+./gradlew runClient
+```
+Requires JDK 21. This update was written without a Minecraft toolchain, so it has not been compiled yet.

@@ -14,6 +14,11 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
+/**
+ * Floor Trial Spawner mobs (tagged dt_floor) must always hunt players. Vanilla neutral mobs (zombified piglins,
+ * endermen, spiders in light) and brain-driven mobs (piglins, hoglins) never pick a target on their own, and
+ * spawner-spawned mobs skip finalizeSpawn, so we hand every floor mob the nearest survival player as its target.
+ */
 public final class FloorMobs {
     private static final double RANGE = 40.0;
 
@@ -44,6 +49,7 @@ public final class FloorMobs {
         } else if (mob instanceof EnderMan em) {
             em.setTarget(player);
         } else if (mob instanceof AbstractPiglin || mob instanceof Hoglin) {
+            // Brain-driven mobs ignore setTarget alone; give the brain the attack target and the anger memory.
             mob.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, player);
             mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, player.getUUID(), 600L);
         }

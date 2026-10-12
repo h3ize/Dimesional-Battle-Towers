@@ -59,8 +59,8 @@ public class TowerPiece extends StructurePiece {
     /** Every floor is a Trial Spawner room (clear it for a key). */
     static final int[] TRIAL_TOTAL = {6, 8, 10, 12, 6};
     static final int[] TRIAL_SIMUL = {2, 3, 4, 5, 3};
-    /** Cooldown after a trial spawner is beaten, in ticks (40 = 2 seconds). */
-    static final int SPAWNER_COOLDOWN = 40;
+    /** Cooldown after a trial spawner is beaten, in ticks (72000 = 1 hour). */
+    static final int SPAWNER_COOLDOWN = 72000;
     /** The boss spawner stays dormant for a long time after the boss dies (1200000 ticks = ~16 hours). */
     static final int BOSS_COOLDOWN = 1200000;
     static final String[] ARMOR_TIER = {"", "chainmail", "iron", "diamond", "netherite"};
@@ -277,12 +277,13 @@ public class TowerPiece extends StructurePiece {
         }
 
 
-        String weaponFor(EntityType<?> type, int k) {
+        String weaponFor(EntityType<?> type, int k, boolean diamond) {
+            String tool = (k == 3 && !diamond) ? "iron" : TOOL_TIER[k];
             if (type == EntityType.SKELETON || type == EntityType.STRAY || type == EntityType.BOGGED) return "bow";
             if (type == EntityType.PILLAGER) return "crossbow";
-            if (type == EntityType.VINDICATOR) return TOOL_TIER[k] + "_axe";
+            if (type == EntityType.VINDICATOR) return tool + "_axe";
             if (type == EntityType.ZOMBIE || type == EntityType.HUSK || type == EntityType.DROWNED
-                    || type == EntityType.WITHER_SKELETON) return TOOL_TIER[k] + "_sword";
+                    || type == EntityType.WITHER_SKELETON) return tool + "_sword";
             if (type == EntityType.ZOMBIFIED_PIGLIN || type == EntityType.PIGLIN) return "golden_sword";
             if (type == EntityType.PIGLIN_BRUTE) return "golden_axe";
             return null;
@@ -292,16 +293,19 @@ public class TowerPiece extends StructurePiece {
          * Spawn-data entity for a floor mob. Gear, potion effects and (on the top floor) extra health scale with height.
          * Because this is more than a bare {id:...}, the spawner will NOT call finalizeSpawn, so weapons are set here.
          */
-        String mobNbt(EntityType<?> type, int k) {
+        String mobNbt(EntityType<?> type, int k, int diamondSlot) {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
             StringBuilder sb = new StringBuilder("{id:'" + id + "',Tags:['dt_floor']");
             if (k >= 1 && ARMORED.contains(type)) {
-                String a = "minecraft:" + ARMOR_TIER[k];
-                sb.append(",ArmorItems:[{id:'").append(a).append("_boots',count:1},{id:'").append(a)
-                        .append("_leggings',count:1},{id:'").append(a).append("_chestplate',count:1},{id:'").append(a)
-                        .append("_helmet',count:1}],ArmorDropChances:[0.0f,0.0f,0.0f,0.0f]");
+                // Floor 3 is iron with at most ONE diamond piece (diamondSlot 0-3 = boots..helmet); no full diamond sets.
+                sb.append(",ArmorItems:[");
+                for (int i = 0; i < 4; i++) {
+                    String tier = k == 3 ? (diamondSlot == i ? "diamond" : "iron") : ARMOR_TIER[k];
+                    sb.append(i > 0 ? "," : "").append("{id:'minecraft:").append(tier).append("_").append(ARMOR_SLOTS[i]).append("',count:1}");
+                }
+                sb.append("],ArmorDropChances:[0.0f,0.0f,0.0f,0.0f]");
             }
-            String w = weaponFor(type, k);
+            String w = weaponFor(type, k, diamondSlot == 4);
             if (w != null) sb.append(",HandItems:[{id:'minecraft:").append(w).append("',count:1},{}],HandDropChances:[0.0f,0.0f]");
             List<String> fx = new ArrayList<>();
             if (k >= 3) fx.add("{id:'minecraft:speed',amplifier:0b,duration:-1,show_particles:0b}");
@@ -312,6 +316,11 @@ public class TowerPiece extends StructurePiece {
             if (!fx.isEmpty()) sb.append(",active_effects:[").append(String.join(",", fx)).append("]");
             if (k >= 4) sb.append(",attributes:[{id:'minecraft:generic.max_health',base:80.0d}],Health:80.0f");
             return sb.append("}").toString();
+        }
+
+        /** Spawn entry for a floor spawner. Diamond gear never appears on mobs (floor 3 is plain iron); it only drops from chests. */
+        String floorPotentials(EntityType<?> type, int k) {
+            return "{weight:1,data:{entity:" + mobNbt(type, k, -1) + "}}";
         }
 
         /**
@@ -327,7 +336,7 @@ public class TowerPiece extends StructurePiece {
             EntityType<?> type = choices.get(rnd.nextInt(choices.size()));
             String config = "{spawn_range:6,total_mobs:" + TRIAL_TOTAL[k] + ".0f,simultaneous_mobs:" + TRIAL_SIMUL[k]
                     + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:30,"
-                    + "spawn_potentials:[{weight:1,data:{entity:" + mobNbt(type, k) + "}}],"
+                    + "spawn_potentials:[" + floorPotentials(type, k) + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
                     + ",required_player_range:14,target_cooldown_length:" + SPAWNER_COOLDOWN + "}");
@@ -397,7 +406,7 @@ public class TowerPiece extends StructurePiece {
                 String mat = mixed && rnd.nextBoolean() ? other : base;
                 armor.append("{id:'minecraft:").append(mat).append('_').append(ARMOR_SLOTS[i]).append("',count:1}");
             }
-            String tool = rnd.nextInt(12) == 0 ? RARE_TOOLS[rnd.nextInt(RARE_TOOLS.length)] : STAND_TOOLS[rnd.nextInt(STAND_TOOLS.length)];
+            String tool = STAND_TOOLS[rnd.nextInt(STAND_TOOLS.length)];
             float yaw = dx > 0 ? 90f : 270f;
             entity("{id:'minecraft:armor_stand',ShowArms:1b,NoBasePlate:1b,Invulnerable:1b,DisabledSlots:4144959,Rotation:[" + yaw + "f,0f],"
                     + "ArmorItems:[" + armor + "],HandItems:[{id:'minecraft:" + tool + "',count:1},{}]}", cx + dx + 0.5, y, cz + dz + 0.5);
@@ -559,17 +568,15 @@ public class TowerPiece extends StructurePiece {
                     set(sx * x, b + 1, sz * z, edge ? alt : main);
                 }
             }
-            // North-south runner: runs right up to the far wall; on the staircase side it only gets one extra block.
-            final int stairSign = k % 2 == 0 ? -1 : 1;
-            for (int dz = -(I - 1); dz <= (k == 0 ? R : I - 1); dz++) {
+            // North-south runner: runs right up to the wall at both ends (underStairs keeps it off the staircase).
+            for (int dz = -I; dz <= (k == 0 ? R : I); dz++) {
                 if (abs(dz) <= 3) continue;
-                if (Integer.signum(dz) == stairSign && abs(dz) > R - 5) continue;
                 for (int dx = -1; dx <= 1; dx++) {
                     if (underStairs(k, dx, dz)) continue;
                     set(dx, b + 1, dz, dx == 0 ? main : alt);
                 }
             }
-            for (int dx = -(I - 1); dx <= I - 1; dx++) {
+            for (int dx = -I; dx <= I; dx++) {
                 if (abs(dx) <= 3) continue;
                 for (int dz = -1; dz <= 1; dz++) set(dx, b + 1, dz, dz == 0 ? main : alt);
             }
