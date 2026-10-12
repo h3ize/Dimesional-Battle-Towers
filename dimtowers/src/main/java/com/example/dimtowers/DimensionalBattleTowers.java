@@ -14,6 +14,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
@@ -28,14 +29,17 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
 
-@Mod(DimensionalTowers.MOD_ID)
-public class DimensionalTowers {
+@Mod(DimensionalBattleTowers.MOD_ID)
+public class DimensionalBattleTowers {
     public static final String MOD_ID = "dimtowers";
 
     public static final TagKey<Structure> TOWERS =
@@ -83,21 +87,28 @@ public class DimensionalTowers {
             ENTITIES.register("tower_drowned", () -> EntityType.Builder.<TowerDrowned>of(TowerDrowned::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_drowned"));
 
-    public DimensionalTowers(IEventBus modBus) {
+    public DimensionalBattleTowers(IEventBus modBus) {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
         ENTITIES.register(modBus);
+        OminousKey.ITEMS.register(modBus);
         modBus.addListener(this::attributes);
+        modBus.addListener(this::creativeTabs);
         NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
+        NeoForge.EVENT_BUS.addListener(OminousKey::onUse);
+        NeoForge.EVENT_BUS.addListener(OminousKey::onServerTick);
+    }
+
+    private void creativeTabs(BuildCreativeModeTabContentsEvent e) {
+        if (e.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) e.accept(OminousKey.KEY.get());
     }
 
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
-        // TreasureMapForEmeralds is package-private in 1.21.1 — use public reimplementation
         e.getTrades().get(3).add(new StructureMapTrade(
                 20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
     }

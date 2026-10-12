@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "minecraft:ominous_trial_key"
+          "name": "dimtowers:dimensional_tower_ominous_key"
         }
       ]
     }

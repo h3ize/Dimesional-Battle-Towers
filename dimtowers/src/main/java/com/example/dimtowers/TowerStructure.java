@@ -29,7 +29,7 @@ public class TowerStructure extends Structure {
     }
 
     @Override
-    public StructureType<?> type() { return DimensionalTowers.TOWER_STRUCTURE.get(); }
+    public StructureType<?> type() { return DimensionalBattleTowers.TOWER_STRUCTURE.get(); }
 
     @Override
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext ctx) {

@@ -1,5 +1,6 @@
 package com.example.dimtowers;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -155,7 +156,7 @@ public final class BossKit {
     }
 
     private static void announce(ServerLevel sl, Mob boss, String key) {
-        Component msg = Component.translatable(key, boss.getDisplayName());
+        Component msg = Component.translatable(key, boss.getDisplayName()).withStyle(ChatFormatting.RED);
         for (ServerPlayer p : sl.players()) if (p.distanceToSqr(boss) < 64.0 * 64.0) p.displayClientMessage(msg, true);
     }
 
@@ -231,7 +232,7 @@ public final class BossKit {
 
     /** True for any of this mod's boss entity types (minions are tagged dt_minion and never count as bosses). */
     private static boolean isTowerBoss(LivingEntity e) {
-        return BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getNamespace().equals(DimensionalTowers.MOD_ID)
+        return BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getNamespace().equals(DimensionalBattleTowers.MOD_ID)
                 && !e.getTags().contains("dt_minion");
     }
 

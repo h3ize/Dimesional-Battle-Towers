@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "dimtowers:item/dimensional_tower_ominous_key"
+  }
+}

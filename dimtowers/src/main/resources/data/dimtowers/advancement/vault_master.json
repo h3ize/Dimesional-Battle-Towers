@@ -2,7 +2,7 @@
   "parent": "dimtowers:slay_boss",
   "display": {
     "icon": {
-      "id": "minecraft:vault"
+      "id": "dimtowers:dimensional_tower_ominous_key"
     },
     "title": {
       "translate": "advancement.dimtowers.vault_master.title"
@@ -16,53 +16,13 @@
     "hidden": false
   },
   "criteria": {
-    "trial_key": {
-      "trigger": "minecraft:item_used_on_block",
-      "conditions": {
-        "location": [
-          {
-            "condition": "minecraft:match_tool",
-            "predicate": {
-              "items": "minecraft:trial_key"
-            }
-          },
-          {
-            "condition": "minecraft:block_state_property",
-            "block": "minecraft:vault",
-            "properties": {
-              "ominous": "false"
-            }
-          }
-        ]
-      }
-    },
-    "ominous_key": {
-      "trigger": "minecraft:item_used_on_block",
-      "conditions": {
-        "location": [
-          {
-            "condition": "minecraft:match_tool",
-            "predicate": {
-              "items": "minecraft:ominous_trial_key"
-            }
-          },
-          {
-            "condition": "minecraft:block_state_property",
-            "block": "minecraft:vault",
-            "properties": {
-              "ominous": "true"
-            }
-          }
-        ]
-      }
+    "boss_vault": {
+      "trigger": "minecraft:impossible"
     }
   },
   "requirements": [
     [
-      "trial_key"
-    ],
-    [
-      "ominous_key"
+      "boss_vault"
     ]
   ],
   "rewards": {

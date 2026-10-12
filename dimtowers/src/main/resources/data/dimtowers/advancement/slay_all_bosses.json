@@ -2,7 +2,7 @@
   "parent": "dimtowers:slay_boss",
   "display": {
     "icon": {
-      "id": "minecraft:ominous_trial_key"
+      "id": "dimtowers:dimensional_tower_ominous_key"
     },
     "title": {
       "translate": "advancement.dimtowers.slay_all_bosses.title"

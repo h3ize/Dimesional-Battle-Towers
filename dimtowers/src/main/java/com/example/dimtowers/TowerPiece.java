@@ -81,13 +81,13 @@ public class TowerPiece extends StructurePiece {
     private final int cx, cz, s0;
 
     public TowerPiece(String themeId, int cx, int cz, int s0) {
-        super(DimensionalTowers.TOWER_PIECE.get(), 0,
+        super(DimensionalBattleTowers.TOWER_PIECE.get(), 0,
                 new BoundingBox(cx - (R + 4), s0 - 60, cz - (R + 4), cx + (R + 4), s0 + FLOORS * H + 24, cz + (R + 4)));
         this.themeId = themeId; this.cx = cx; this.cz = cz; this.s0 = s0;
     }
 
     public TowerPiece(StructurePieceSerializationContext ctx, CompoundTag tag) {
-        super(DimensionalTowers.TOWER_PIECE.get(), tag);
+        super(DimensionalBattleTowers.TOWER_PIECE.get(), tag);
         this.themeId = tag.getString("Theme");
         this.cx = tag.getInt("CX");
         this.cz = tag.getInt("CZ");
@@ -233,11 +233,11 @@ public class TowerPiece extends StructurePiece {
         /** Theme loot for the treasury floor, the four top-floor chests. */
         ResourceKey<LootTable> treasureKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
-                    ResourceLocation.fromNamespaceAndPath(DimensionalTowers.MOD_ID, "chests/treasure_" + t.id));
+                    ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/treasure_" + t.id));
         }
         ResourceKey<LootTable> barrelKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
-                    ResourceLocation.fromNamespaceAndPath(DimensionalTowers.MOD_ID, "chests/barrel"));
+                    ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/barrel"));
         }
         ResourceKey<LootTable> key(String p) {
             return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace(p));
@@ -297,7 +297,6 @@ public class TowerPiece extends StructurePiece {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
             StringBuilder sb = new StringBuilder("{id:'" + id + "',Tags:['dt_floor']");
             if (k >= 1 && ARMORED.contains(type)) {
-                // Floor 3 is iron with at most ONE diamond piece (diamondSlot 0-3 = boots..helmet); no full diamond sets.
                 sb.append(",ArmorItems:[");
                 for (int i = 0; i < 4; i++) {
                     String tier = k == 3 ? (diamondSlot == i ? "diamond" : "iron") : ARMOR_TIER[k];
@@ -335,7 +334,7 @@ public class TowerPiece extends StructurePiece {
             List<EntityType<?>> choices = t.mobsForFloor(k);
             EntityType<?> type = choices.get(rnd.nextInt(choices.size()));
             String config = "{spawn_range:6,total_mobs:" + TRIAL_TOTAL[k] + ".0f,simultaneous_mobs:" + TRIAL_SIMUL[k]
-                    + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:30,"
+                    + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:" + FloorMobs.FLOOR_SPAWN_TICKS + ","
                     + "spawn_potentials:[" + floorPotentials(type, k) + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
@@ -562,7 +561,6 @@ public class TowerPiece extends StructurePiece {
                     set(sx * x, b + 1, sz * z, edge ? alt : main);
                 }
             }
-            // North-south runner: runs right up to the wall at both ends (underStairs keeps it off the staircase).
             for (int dz = -I; dz <= (k == 0 ? R : I); dz++) {
                 if (abs(dz) <= 3) continue;
                 for (int dx = -1; dx <= 1; dx++) {
@@ -601,7 +599,6 @@ public class TowerPiece extends StructurePiece {
                 int open = i < H - 1 ? b + H + 3 : y + 3;
                 for (int z : new int[]{zRow, zIn}) {
                     for (int yy = b + 1; yy < y; yy++) clr(x, yy, z);
-                    // The runner passes under the raised steps: keep it continuous instead of leaving bare floor.
                     if (i >= 1 && abs(x) <= 1) set(x, b + 1, z, x == 0 ? carpet() : carpetAlt());
                     set(x, y, z, stair);
                     for (int yy = y + 1; yy <= open; yy++) clr(x, yy, z);
@@ -879,11 +876,10 @@ public class TowerPiece extends StructurePiece {
             if (sTop + 1 <= yMax && box.isInside(vp)) {
                 level.setBlock(vp, Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH)
                         .setValue(BlockStateProperties.OMINOUS, true), 2);
-                blockEntityNbt(vp, "{config:{key_item:{id:\"minecraft:ominous_trial_key\",count:1},"
+                blockEntityNbt(vp, "{config:{key_item:{id:\"dimtowers:dimensional_tower_ominous_key\",count:1},"
                         + "loot_table:\"dimtowers:vault/reward_" + t.id + "\"}}");
             }
 
-            // Treasure chests in the three centre bays (2nd, 3rd, 4th of the five) on the east and west walls.
             for (int side = 0; side < 2; side++) {
                 int wx = side == 0 ? I : -I;
                 Direction facing = side == 0 ? Direction.WEST : Direction.EAST;
