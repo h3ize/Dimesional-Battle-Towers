@@ -89,16 +89,14 @@ public class DimensionalTowers {
         ENTITIES.register(modBus);
         modBus.addListener(this::attributes);
         NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
+        NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
     }
 
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
-<<<<<<< HEAD
-        // TreasureMapForEmeralds is package-private in 1.21.1; use a public reimplementation.
-=======
         // TreasureMapForEmeralds is package-private in 1.21.1 — use public reimplementation
->>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9
         e.getTrades().get(3).add(new StructureMapTrade(
                 20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
     }
@@ -116,13 +114,6 @@ public class DimensionalTowers {
         e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());
     }
 
-<<<<<<< HEAD
-    /**
-     * Public reimplementation of the package-private {@code VillagerTrades.TreasureMapForEmeralds}
-     * so the mod can sell cartographer maps to the {@code dimtowers:towers} structure tag.
-     */
-=======
->>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9
     private static final class StructureMapTrade implements VillagerTrades.ItemListing {
         private final int emeraldCost;
         private final TagKey<Structure> destination;
@@ -164,8 +155,4 @@ public class DimensionalTowers {
                     0.2F);
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9

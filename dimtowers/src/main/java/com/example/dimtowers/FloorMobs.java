@@ -1,0 +1,51 @@
+package com.example.dimtowers;
+
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+
+public final class FloorMobs {
+    private static final double RANGE = 40.0;
+
+    private FloorMobs() {}
+
+    public static void onJoin(EntityJoinLevelEvent e) {
+        if (e.getLevel().isClientSide() || !(e.getEntity() instanceof Mob mob) || !mob.getTags().contains("dt_floor")) return;
+        AttributeInstance follow = mob.getAttribute(Attributes.FOLLOW_RANGE);
+        if (follow != null && follow.getBaseValue() < RANGE) follow.setBaseValue(RANGE);
+        mob.setPersistenceRequired();
+    }
+
+    public static void onTick(EntityTickEvent.Post e) {
+        if (!(e.getEntity() instanceof Mob mob) || mob.level().isClientSide() || !mob.isAlive()) return;
+        if (mob.tickCount % 10 != 0 || !mob.getTags().contains("dt_floor")) return;
+
+        LivingEntity cur = mob.getTarget();
+        if (cur != null && cur.isAlive() && (!(cur instanceof Player p) || (!p.isCreative() && !p.isSpectator()))) return;
+
+        Player player = mob.level().getNearestPlayer(mob.getX(), mob.getY(), mob.getZ(), RANGE,
+                EntitySelector.NO_CREATIVE_OR_SPECTATOR);
+        if (player == null) return;
+
+        mob.setTarget(player);
+        if (mob instanceof ZombifiedPiglin zp) {
+            zp.setPersistentAngerTarget(player.getUUID());
+            zp.startPersistentAngerTimer();
+        } else if (mob instanceof EnderMan em) {
+            em.setTarget(player);
+        } else if (mob instanceof AbstractPiglin || mob instanceof Hoglin) {
+            mob.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, player);
+            mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, player.getUUID(), 600L);
+        }
+    }
+}
