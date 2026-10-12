@@ -61,15 +61,12 @@ public class DimensionalTowers {
     public static final DeferredHolder<EntityType<?>, EntityType<TowerSkeleton>> TOWER_SKELETON =
             ENTITIES.register("tower_skeleton", () -> EntityType.Builder.<TowerSkeleton>of(TowerSkeleton::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.99F).fireImmune().clientTrackingRange(10).build("tower_skeleton"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerPiglin>> TOWER_PIGLIN =
             ENTITIES.register("tower_piglin", () -> EntityType.Builder.<TowerPiglin>of(TowerPiglin::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_piglin"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerVindicator>> TOWER_VINDICATOR =
             ENTITIES.register("tower_vindicator", () -> EntityType.Builder.<TowerVindicator>of(TowerVindicator::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_vindicator"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerBlaze>> TOWER_BLAZE =
             ENTITIES.register("tower_blaze", () -> EntityType.Builder.<TowerBlaze>of(TowerBlaze::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.8F).fireImmune().clientTrackingRange(10).build("tower_blaze"));
@@ -97,7 +94,11 @@ public class DimensionalTowers {
 
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
+<<<<<<< HEAD
         // TreasureMapForEmeralds is package-private in 1.21.1; use a public reimplementation.
+=======
+        // TreasureMapForEmeralds is package-private in 1.21.1 — use public reimplementation
+>>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9
         e.getTrades().get(3).add(new StructureMapTrade(
                 20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
     }
@@ -115,10 +116,13 @@ public class DimensionalTowers {
         e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());
     }
 
+<<<<<<< HEAD
     /**
      * Public reimplementation of the package-private {@code VillagerTrades.TreasureMapForEmeralds}
      * so the mod can sell cartographer maps to the {@code dimtowers:towers} structure tag.
      */
+=======
+>>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9
     private static final class StructureMapTrade implements VillagerTrades.ItemListing {
         private final int emeraldCost;
         private final TagKey<Structure> destination;
@@ -160,4 +164,8 @@ public class DimensionalTowers {
                     0.2F);
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 17a85d25459f7f1a4cf5910c582cf2d74a7e71a9
