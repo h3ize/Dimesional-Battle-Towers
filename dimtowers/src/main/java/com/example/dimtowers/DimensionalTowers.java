@@ -80,10 +80,27 @@ public class DimensionalTowers {
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
     }
 
+
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
-        e.getTrades().get(3).add(new VillagerTrades.TreasureMapForEmeralds(
-                20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
+        e.getTrades().get(3).add((trader, random) -> {
+            ItemStack emeralds = new ItemStack(Items.EMERALD, 20);
+            ItemStack map = MapItem.create(
+                    BuiltInRegistries.MAP_DECORATIONS.get(TOWERS),
+                    "filled_map.dimtowers.tower",
+                    MapDecorationTypes.RED_X,
+                    3,
+                    15
+            );
+
+            return new MerchantOffer(
+                    new ItemStack(Items.EMERALD, 20),
+                    map,
+                    15,
+                    3,
+                    0.2F
+            );
+        });
     }
 
     private void attributes(EntityAttributeCreationEvent e) {
