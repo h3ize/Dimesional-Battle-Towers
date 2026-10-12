@@ -15,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
@@ -26,11 +27,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.entity.projectile.DragonFireball;
+import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.entity.projectile.LargeFireball;
 import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.entity.projectile.ThrownTrident;
@@ -66,16 +70,15 @@ public final class BossKit {
         LEAP,
         BLAZE_BARRAGE,
         FIRE_NOVA,
-        WEB_SHOT,
-        BROOD,
         BLINK,
         DRAGON_BREATH,
-        TRIDENT_FAN
+        TRIDENT_FAN,
+        FANG_WAVE
     }
 
     public static final double DMG_ZOMBIE = 18.0, DMG_SKELETON = 10.0, DMG_WITHER = 18.0, DMG_PIGLIN = 20.0,
-            DMG_VINDICATOR = 20.0, DMG_BLAZE = 14.0, DMG_SPIDER = 16.0, DMG_ENDER = 22.0, DMG_SLIME = 18.0,
-            DMG_DROWNED = 20.0;
+            DMG_VINDICATOR = 20.0, DMG_BLAZE = 14.0, DMG_ENDER = 22.0, DMG_SLIME = 18.0,
+            DMG_DROWNED = 20.0, DMG_GUARDIAN = 20.0, DMG_EVOKER = 16.0, DMG_RAVAGER = 24.0;
     public static final int XP = 3000;
 
     public static AttributeSupplier.Builder boost(AttributeSupplier.Builder b, double damage) {
@@ -246,6 +249,42 @@ public final class BossKit {
             sl.sendParticles(ParticleTypes.POOF, m.getX(), m.getY() + m.getBbHeight() / 2, m.getZ(), 10, 0.3, 0.4, 0.3, 0.02);
             m.discard();
         }
+        List<Vex> vexes = sl.getEntitiesOfClass(Vex.class, dead.getBoundingBox().inflate(64), v -> v.getOwner() == dead);
+        for (Vex v : vexes) v.discard();
+    }
+
+    /** Keeps a flying boss hovering a few blocks from the nearest player, circling slowly. */
+    public static class HoverGoal extends Goal {
+        private final Mob mob;
+
+        public HoverGoal(Mob mob) {
+            this.mob = mob;
+        }
+
+        @Nullable
+        private Player nearest() {
+            return mob.level().getNearestPlayer(mob.getX(), mob.getY(), mob.getZ(), 40.0, EntitySelector.NO_CREATIVE_OR_SPECTATOR);
+        }
+
+        @Override public boolean canUse() { return nearest() != null; }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+
+        @Override
+        public void tick() {
+            Player p = nearest();
+            if (p == null) return;
+            double dx = p.getX() - mob.getX(), dz = p.getZ() - mob.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
+            double ax = 0.0, az = 0.0;
+            if (dist > 1.0E-3) {
+                double push = dist > 9.0 ? 0.05 : dist < 5.0 ? -0.05 : 0.0;
+                double side = (mob.tickCount / 100) % 2 == 0 ? 0.02 : -0.02;
+                ax = dx / dist * push - dz / dist * side;
+                az = dz / dist * push + dx / dist * side;
+            }
+            double ay = Math.max(-0.05, Math.min(0.05, (p.getY() + 2.0 - mob.getY()) * 0.05));
+            mob.setDeltaMovement(mob.getDeltaMovement().add(ax, ay, az));
+        }
     }
 
     private interface Proj { @Nullable Entity make(Level level, Mob boss, Vec3 dir, int index); }
@@ -258,8 +297,6 @@ public final class BossKit {
         private int windup = -1;
         private int windupIdx = -1;
         private int leapTicks = 0;
-        private final List<BlockPos> webs = new ArrayList<>();
-        private final List<Long> webExpiry = new ArrayList<>();
 
         public SignatureGoal(Mob boss, Move... moves) {
             this.boss = boss;
@@ -274,7 +311,6 @@ public final class BossKit {
         @Override
         public void stop() {
             windup = -1;
-            if (boss.level() instanceof ServerLevel sl) clearWebs(sl, true);
         }
 
         @Override
@@ -282,7 +318,6 @@ public final class BossKit {
             if (!(boss.level() instanceof ServerLevel sl)) return;
             LivingEntity t = target(boss);
             if (t == null) return;
-            clearWebs(sl, false);
             boolean enraged = boss.getTags().contains("dt_enraged");
 
             if (leapTicks > 0) {
@@ -333,14 +368,6 @@ public final class BossKit {
                     sound(sl, SoundEvents.HOGLIN_ANGRY, 2.0f, 0.7f);
                     sl.sendParticles(ParticleTypes.ANGRY_VILLAGER, boss.getX(), boss.getY(1.0), boss.getZ(), 15, 1, 1, 1, 0.0);
                     cd[i] = enraged ? 260 : 400;
-                    return true;
-                }
-                case BROOD -> {
-                    if (countMinions(sl, boss) >= 8) { cd[i] = 100; return false; }
-                    int n = enraged ? 4 : 3;
-                    for (int j = 0; j < n; j++) spawnMinion(sl, boss, EntityType.CAVE_SPIDER, enraged ? 1 : 0);
-                    sound(sl, SoundEvents.SPIDER_AMBIENT, 2.0f, 0.5f);
-                    cd[i] = enraged ? 280 : 420;
                     return true;
                 }
                 case BLINK -> {
@@ -402,23 +429,6 @@ public final class BossKit {
                     cd[i] = enraged ? 100 : 170;
                     return true;
                 }
-                case WEB_SHOT -> {
-                    BlockPos c = t.blockPosition();
-                    long expiry = sl.getGameTime() + (enraged ? 200 : 140);
-                    for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
-                        if (!enraged && dx != 0 && dz != 0) continue;
-                        BlockPos p = c.offset(dx, 0, dz);
-                        if (sl.getBlockState(p).isAir()) {
-                            sl.setBlock(p, Blocks.COBWEB.defaultBlockState(), 3);
-                            webs.add(p);
-                            webExpiry.add(expiry);
-                        }
-                    }
-                    sl.sendParticles(ParticleTypes.CLOUD, t.getX(), t.getY(0.5), t.getZ(), 20, 0.8, 0.5, 0.8, 0.02);
-                    sound(sl, SoundEvents.SPIDER_AMBIENT, 1.5f, 1.4f);
-                    cd[i] = enraged ? 90 : 150;
-                    return true;
-                }
                 case DRAGON_BREATH -> {
                     fan(level, t, enraged ? 1 : 0, 0.25f, (l, b, d, idx) -> new DragonFireball(l, b, d));
                     sound(sl, SoundEvents.ENDER_DRAGON_SHOOT, 1.5f, 1.0f);
@@ -435,6 +445,28 @@ public final class BossKit {
                     });
                     sound(sl, SoundEvents.DROWNED_SHOOT, 2.0f, 0.8f);
                     cd[i] = enraged ? 60 : 110;
+                    return true;
+                }
+                case FANG_WAVE -> {
+                    double dx = t.getX() - boss.getX(), dz = t.getZ() - boss.getZ();
+                    double len = Math.sqrt(dx * dx + dz * dz);
+                    if (len < 1.0E-3) return false;
+                    double ux = dx / len, uz = dz / len;
+                    float yaw = (float) Math.atan2(dz, dx);
+                    for (int j = 1; j <= 14; j++) {
+                        level.addFreshEntity(new EvokerFangs(level, boss.getX() + ux * j * 1.5, t.getY(),
+                                boss.getZ() + uz * j * 1.5, yaw, j, boss));
+                    }
+                    level.addFreshEntity(new EvokerFangs(level, t.getX(), t.getY(), t.getZ(), yaw, 8, boss));
+                    if (enraged) {
+                        for (int j = 0; j < 8; j++) {
+                            double a = j * Math.PI / 4.0;
+                            level.addFreshEntity(new EvokerFangs(level, t.getX() + Math.cos(a) * 2.0, t.getY(),
+                                    t.getZ() + Math.sin(a) * 2.0, (float) a, 10 + j % 3, boss));
+                        }
+                    }
+                    sound(sl, SoundEvents.EVOKER_PREPARE_ATTACK, 2.0f, 0.8f);
+                    cd[i] = enraged ? 80 : 140;
                     return true;
                 }
                 default -> { return false; }
@@ -519,17 +551,6 @@ public final class BossKit {
             a.setCritArrow(true);
             a.shoot(dx, dy, dz, speed, inaccuracy);
             return a;
-        }
-
-        private void clearWebs(ServerLevel sl, boolean force) {
-            for (int i = webs.size() - 1; i >= 0; i--) {
-                if (force || sl.getGameTime() >= webExpiry.get(i)) {
-                    BlockPos p = webs.get(i);
-                    if (sl.getBlockState(p).is(Blocks.COBWEB)) sl.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
-                    webs.remove(i);
-                    webExpiry.remove(i);
-                }
-            }
         }
     }
 }

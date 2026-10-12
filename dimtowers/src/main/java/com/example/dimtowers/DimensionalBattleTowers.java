@@ -74,9 +74,15 @@ public class DimensionalBattleTowers {
     public static final DeferredHolder<EntityType<?>, EntityType<TowerBlaze>> TOWER_BLAZE =
             ENTITIES.register("tower_blaze", () -> EntityType.Builder.<TowerBlaze>of(TowerBlaze::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.8F).fireImmune().clientTrackingRange(10).build("tower_blaze"));
-    public static final DeferredHolder<EntityType<?>, EntityType<TowerSpider>> TOWER_SPIDER =
-            ENTITIES.register("tower_spider", () -> EntityType.Builder.<TowerSpider>of(TowerSpider::new, MobCategory.MONSTER)
-                    .sized(1.4F, 0.9F).fireImmune().clientTrackingRange(10).build("tower_spider"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerGuardian>> TOWER_GUARDIAN =
+            ENTITIES.register("tower_guardian", () -> EntityType.Builder.<TowerGuardian>of(TowerGuardian::new, MobCategory.MONSTER)
+                    .sized(0.85F, 0.85F).fireImmune().clientTrackingRange(10).build("tower_guardian"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerEvoker>> TOWER_EVOKER =
+            ENTITIES.register("tower_evoker", () -> EntityType.Builder.<TowerEvoker>of(TowerEvoker::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_evoker"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerRavager>> TOWER_RAVAGER =
+            ENTITIES.register("tower_ravager", () -> EntityType.Builder.<TowerRavager>of(TowerRavager::new, MobCategory.MONSTER)
+                    .sized(1.95F, 2.2F).fireImmune().clientTrackingRange(10).build("tower_ravager"));
     public static final DeferredHolder<EntityType<?>, EntityType<TowerEnder>> TOWER_ENDER =
             ENTITIES.register("tower_ender", () -> EntityType.Builder.<TowerEnder>of(TowerEnder::new, MobCategory.MONSTER)
                     .sized(0.6F, 2.9F).fireImmune().clientTrackingRange(10).build("tower_ender"));
@@ -120,7 +126,9 @@ public class DimensionalBattleTowers {
         e.put(TOWER_PIGLIN.get(), TowerPiglin.createBossAttributes().build());
         e.put(TOWER_VINDICATOR.get(), TowerVindicator.createBossAttributes().build());
         e.put(TOWER_BLAZE.get(), TowerBlaze.createBossAttributes().build());
-        e.put(TOWER_SPIDER.get(), TowerSpider.createBossAttributes().build());
+        e.put(TOWER_GUARDIAN.get(), TowerGuardian.createBossAttributes().build());
+        e.put(TOWER_EVOKER.get(), TowerEvoker.createBossAttributes().build());
+        e.put(TOWER_RAVAGER.get(), TowerRavager.createBossAttributes().build());
         e.put(TOWER_ENDER.get(), TowerEnder.createBossAttributes().build());
         e.put(TOWER_SLIME.get(), TowerSlime.createBossAttributes().build());
         e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());

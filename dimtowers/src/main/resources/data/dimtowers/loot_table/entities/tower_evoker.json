@@ -302,7 +302,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "minecraft:music_disc_chirp",
+          "name": "minecraft:music_disc_mellohi",
           "weight": 1,
           "conditions": [
             {
@@ -318,18 +318,8 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "minecraft:spider_eye",
+          "name": "minecraft:totem_of_undying",
           "weight": 1,
-          "functions": [
-            {
-              "function": "minecraft:set_count",
-              "count": {
-                "type": "minecraft:uniform",
-                "min": 8,
-                "max": 16
-              }
-            }
-          ],
           "conditions": [
             {
               "condition": "minecraft:random_chance",

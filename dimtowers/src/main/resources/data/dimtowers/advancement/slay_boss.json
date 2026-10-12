@@ -100,20 +100,6 @@
         ]
       }
     },
-    "tower_spider": {
-      "trigger": "minecraft:player_killed_entity",
-      "conditions": {
-        "entity": [
-          {
-            "condition": "minecraft:entity_properties",
-            "entity": "this",
-            "predicate": {
-              "type": "dimtowers:tower_spider"
-            }
-          }
-        ]
-      }
-    },
     "tower_ender": {
       "trigger": "minecraft:player_killed_entity",
       "conditions": {
@@ -155,6 +141,48 @@
           }
         ]
       }
+    },
+    "tower_guardian": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_guardian"
+            }
+          }
+        ]
+      }
+    },
+    "tower_evoker": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_evoker"
+            }
+          }
+        ]
+      }
+    },
+    "tower_ravager": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_ravager"
+            }
+          }
+        ]
+      }
     }
   },
   "requirements": [
@@ -165,10 +193,12 @@
       "tower_piglin",
       "tower_vindicator",
       "tower_blaze",
-      "tower_spider",
       "tower_ender",
       "tower_slime",
-      "tower_drowned"
+      "tower_drowned",
+      "tower_guardian",
+      "tower_evoker",
+      "tower_ravager"
     ]
   ]
 }

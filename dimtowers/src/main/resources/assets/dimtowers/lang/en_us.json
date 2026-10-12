@@ -11,7 +11,6 @@
   "advancement.dimtowers.slay_all_bosses.description": "Slay every type of Dimensional Battle Tower boss.",
   "entity.dimtowers.tower_vindicator": "Axe Warlord",
   "entity.dimtowers.tower_blaze": "Blaze King",
-  "entity.dimtowers.tower_spider": "Spider Queen",
   "entity.dimtowers.tower_ender": "Void Stalker",
   "entity.dimtowers.tower_slime": "Slime King",
   "entity.dimtowers.tower_drowned": "Tidal Tyrant",
@@ -22,5 +21,8 @@
   "advancement.dimtowers.explorer.description": "Visit every kind of Dimensional Battle Tower.",
   "advancement.dimtowers.vault_master.title": "Master Key",
   "advancement.dimtowers.vault_master.description": "Open a Dimensional Battle Tower boss vault with a Dimensional Tower Ominous Key.",
-  "item.dimtowers.dimensional_tower_ominous_key": "Dimensional Tower Ominous Key"
+  "item.dimtowers.dimensional_tower_ominous_key": "Dimensional Tower Ominous Key",
+  "entity.dimtowers.tower_guardian": "Abyssal Sentinel",
+  "entity.dimtowers.tower_evoker": "Arch-Conjurer",
+  "entity.dimtowers.tower_ravager": "Siege Beast"
 }

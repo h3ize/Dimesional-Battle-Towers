@@ -8,29 +8,29 @@ Climb five floors, clear the champion hall, then face the boss for a massive vau
 
 | Tower              | Where                        | Boss pool                                   |
 | ------------------ | ---------------------------- | ------------------------------------------- |
-| Overworld          | any overworld biome          | Rotting Colossus, Bone Archon, Spider Queen |
+| Overworld          | any overworld biome          | Rotting Colossus, Bone Archon, Arch-Conjurer |
 | Nether             | nether                       | Ashen Tyrant, Blaze King                    |
 | End                | end islands                  | Void Stalker, Ashen Tyrant                  |
 | Piglin             | nether                       | Gilded Warlord, Blaze King                  |
 | Crimson            | crimson forest               | Gilded Warlord, Blaze King                  |
 | Warped             | warped forest                | Void Stalker, Ashen Tyrant                  |
 | Frozen             | snowy biomes                 | Bone Archon, Axe Warlord                    |
-| Desert             | desert                       | Rotting Colossus, Spider Queen              |
+| Desert             | desert                       | Rotting Colossus, Siege Beast                |
 | Oak                | forest, flower forest        | Axe Warlord, Rotting Colossus               |
-| Dark Forest        | dark forest                  | Axe Warlord, Spider Queen                   |
-| Jungle             | jungle biomes                | Spider Queen, Slime King                    |
-| Swamp              | swamp, mangrove swamp        | Slime King, Tidal Tyrant                    |
+| Dark Forest        | dark forest                  | Axe Warlord, Arch-Conjurer                  |
+| Jungle             | jungle biomes                | Slime King, Siege Beast                    |
+| Swamp              | swamp, mangrove swamp        | Slime King, Tidal Tyrant, Abyssal Sentinel  |
 | Taiga              | taiga biomes                 | Rotting Colossus, Bone Archon               |
 | Badlands           | badlands biomes              | Rotting Colossus, Ashen Tyrant              |
-| Pillager           | pillager outpost biomes      | Axe Warlord                                 |
-| Ocean (prismarine) | beaches, stony shores        | Tidal Tyrant                                |
+| Pillager           | pillager outpost biomes      | Axe Warlord, Siege Beast, Arch-Conjurer     |
+| Ocean (prismarine) | beaches, stony shores        | Tidal Tyrant, Abyssal Sentinel              |
 | Deep Dark (sculk)  | windswept hills, stony peaks | Void Stalker, Ashen Tyrant                  |
 | Cherry             | cherry grove, meadow         | Axe Warlord, Slime King                     |
 | Savanna (acacia)   | savanna biomes               | Rotting Colossus, Bone Archon               |
 
 Each theme uses its own wall/floor/pillar blocks, glass color, light source, armor trim pattern, pottery sherd, and floor-mob pool.
 
-## Bosses (10)
+## Bosses (12)
 
 | Boss                 | Base mob        | Signature move                                                                 |
 | -------------------- | --------------- | ------------------------------------------------------------------------------ |
@@ -40,7 +40,9 @@ Each theme uses its own wall/floor/pillar blocks, glass color, light source, arm
 | Gilded Warlord       | Piglin Brute    | Calls in hoglins                                                               |
 | Axe Warlord          | Vindicator      | Telegraphed leap with landing shockwave                                        |
 | Blaze King           | Blaze           | Large-fireball barrage + ring of small fireballs                               |
-| Spider Queen         | Spider          | Temporary cobwebs on the target + cave-spider brood                            |
+| Abyssal Sentinel     | Guardian        | Hovers over the arena firing its guardian beam, plus a ground-slam shockwave   |
+| Arch-Conjurer        | Evoker          | Line of fangs toward you (plus a ring when enraged) + the evoker’s vex summons |
+| Siege Beast          | Ravager         | Telegraphed leap with landing shockwave + ground slam                          |
 | Void Stalker         | Enderman        | Blinks next to you + dragon’s-breath clouds (no vanilla arrow immunity / block stealing) |
 | Slime King           | Slime           | Ground slam, sheds small slimes when hit, splits on death                      |
 | Tidal Tyrant         | Drowned         | Thrown-trident fan                                                             |
@@ -55,11 +57,11 @@ Each theme uses its own wall/floor/pillar blocks, glass color, light source, arm
 
 | Floor | Identity | Spawner |
 | ----- | -------- | ------- |
-| 1 | Armory — armour stands with mixed gear (iron at best, rare diamond tools), candle tables, supply barrels | Trial Spawner, 6 mobs, one type |
+| 1 | Armory — candle tables, supply barrels, vault beside the entrance door | Trial Spawner, 6 mobs, one type |
 | 2 | Library — lecterns, desks, bookshelf stacks, chiseled bookshelves | Trial Spawner, 8 mobs, one type |
 | 3 | Trophy hall — mob heads on pedestals between candlesticks, infested bricks | Trial Spawner, 10 mobs, one type |
 | 4 | Treasury — decorated pots, theme-loot chests | Trial Spawner, 12 mobs, one type |
-| 5 | Champion hall — armour stands (iron at best), lantern braziers | Trial Spawner, 6 champions (80 HP, Strength II) |
+| 5 | Champion hall — candle tables, lantern braziers | Trial Spawner, 6 champions (80 HP, Strength II) |
 
 Floor mobs scale with the floor: lower floors use the weaker half of the theme’s list, higher floors use the stronger half.
 
@@ -80,9 +82,11 @@ Floor mobs scale with the floor: lower floors use the weaker half of the theme�
 
 Named items carry the gold lore line: “Taken from a Dimensional Battle Tower.”
 
-**Floor vaults** — smaller per-theme table with a chance at the theme’s trim template.
+**Floor vaults** (all five floors) — smaller per-theme table with a chance at the theme’s trim template.
 
-**Top-floor / treasury chests** — end city treasure + theme trim template + named gear (no maps).
+**Top-floor chests** — five per side wall; the middle three use the theme loot, the outer two (1st and 5th) randomly roll village blacksmith or end city loot.
+
+**Treasury chests** — end city treasure + theme trim template + named gear (no maps).
 
 **Tower Maps** — sold by Cartographer villagers (Journeyman trade: 20 emeralds + compass). Points to the nearest tower via the `dimtowers:towers` structure tag.
 
@@ -98,6 +102,6 @@ Floor trial spawners refill killed mobs almost instantly (2 ticks between spawns
 | ---------------------- | -------------------------------------------------- |
 | Towering Ambition      | Visit any Dimensional Battle Tower                 |
 | Tower Slayer           | Kill any tower boss                                |
-| Master of the Towers   | Kill all 10 boss types                             |
+| Master of the Towers   | Kill all 12 boss types                             |
 | Tower Cartographer     | Visit all 19 tower types                           |
 | Master Key             | Open a boss vault with a Dimensional Tower Ominous Key |

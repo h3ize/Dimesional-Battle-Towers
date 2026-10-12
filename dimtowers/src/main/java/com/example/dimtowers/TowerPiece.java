@@ -5,14 +5,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.RandomizableContainer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
@@ -36,7 +33,6 @@ import net.minecraft.world.level.storage.loot.LootTable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public class TowerPiece extends StructurePiece {
@@ -65,13 +61,7 @@ public class TowerPiece extends StructurePiece {
     static final int BOSS_COOLDOWN = 1200000;
     static final String[] ARMOR_TIER = {"", "chainmail", "iron", "diamond", "netherite"};
     static final String[] TOOL_TIER = {"wooden", "stone", "iron", "diamond", "netherite"};
-    /** Armour-stand armour tops out at iron. Duplicates make the common sets more likely. */
-    static final String[] STAND_ARMOR = {"leather", "chainmail", "golden", "golden", "iron", "iron", "iron"};
     static final String[] ARMOR_SLOTS = {"boots", "leggings", "chestplate", "helmet"};
-    static final String[] STAND_TOOLS = {"iron_sword", "iron_axe", "iron_pickaxe", "iron_shovel", "iron_hoe", "stone_sword",
-            "stone_axe", "stone_pickaxe", "golden_sword", "golden_axe", "golden_pickaxe", "bow"};
-    /** Rare armour-stand weapons (about one stand in twelve holds one). */
-    static final String[] RARE_TOOLS = {"diamond_sword", "diamond_axe", "diamond_pickaxe"};
     static boolean has(int[] arr, int v) { for (int a : arr) if (a == v) return true; return false; }
     static final Set<EntityType<?>> ARMORED = Set.<EntityType<?>>of(EntityType.ZOMBIE, EntityType.HUSK, EntityType.DROWNED,
             EntityType.SKELETON, EntityType.STRAY, EntityType.BOGGED, EntityType.WITHER_SKELETON, EntityType.PIGLIN,
@@ -235,6 +225,9 @@ public class TowerPiece extends StructurePiece {
             return ResourceKey.create(Registries.LOOT_TABLE,
                     ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/treasure_" + t.id));
         }
+        ResourceKey<LootTable> outerChestKey() {
+            return key(rnd.nextBoolean() ? "chests/village/village_weaponsmith" : "chests/end_city_treasure");
+        }
         ResourceKey<LootTable> barrelKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
                     ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/barrel"));
@@ -377,40 +370,6 @@ public class TowerPiece extends StructurePiece {
             if (nbt != null) blockEntityNbt(p, nbt);
         }
 
-        /** Loads an entity from SNBT at the given position, only when that position is inside this chunk's box. */
-        void entity(String snbt, double x, double y, double z) {
-            if (y > yMax || !box.isInside(BlockPos.containing(x, y, z))) return;
-            try {
-                CompoundTag tag = TagParser.parseTag(snbt);
-                ListTag pos = new ListTag();
-                pos.add(DoubleTag.valueOf(x)); pos.add(DoubleTag.valueOf(y)); pos.add(DoubleTag.valueOf(z));
-                tag.put("Pos", pos);
-                Optional<Entity> e = EntityType.create(tag, level.getLevel());
-                e.ifPresent(level::addFreshEntity);
-            } catch (Exception ignored) { }
-        }
-
-        /**
-         * Armour stand with random gear: usually one full set (iron at best), sometimes a mix of two materials,
-         * occasionally a missing piece, plus a random tool that is only rarely diamond. No netherite, no trims.
-         */
-        void armorStand(int dx, int y, int dz) {
-            String base = STAND_ARMOR[rnd.nextInt(STAND_ARMOR.length)];
-            String other = STAND_ARMOR[rnd.nextInt(STAND_ARMOR.length)];
-            boolean mixed = !other.equals(base) && rnd.nextInt(10) < 5;
-            StringBuilder armor = new StringBuilder();
-            for (int i = 0; i < 4; i++) {
-                if (i > 0) armor.append(',');
-                if (rnd.nextInt(12) == 0) { armor.append("{}"); continue; }
-                String mat = mixed && rnd.nextBoolean() ? other : base;
-                armor.append("{id:'minecraft:").append(mat).append('_').append(ARMOR_SLOTS[i]).append("',count:1}");
-            }
-            String tool = STAND_TOOLS[rnd.nextInt(STAND_TOOLS.length)];
-            float yaw = dx > 0 ? 90f : 270f;
-            entity("{id:'minecraft:armor_stand',ShowArms:1b,NoBasePlate:1b,Invulnerable:1b,DisabledSlots:4144959,Rotation:[" + yaw + "f,0f],"
-                    + "ArmorItems:[" + armor + "],HandItems:[{id:'minecraft:" + tool + "',count:1},{}]}", cx + dx + 0.5, y, cz + dz + 0.5);
-        }
-
         void decoratedPot(int dx, int y, int dz, String contents) {
             String sh = "'minecraft:" + t.sherd + "_pottery_sherd'";
             String plain = "'minecraft:brick'";
@@ -428,15 +387,12 @@ public class TowerPiece extends StructurePiece {
             RandomizableContainer.setBlockEntityLootTable(level, rnd, p, barrelKey());
         }
 
-        /** Floor 1 (k=0): armory. Armour stands with random gear, candle tables and supply barrels. */
+        /** Floor 1 (k=0): armory. Candle tables alternating with supply barrels. */
         void armory(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
-                switch (i % 4) {
-                    case 0, 2 -> armorStand(x, b + 1, z);
-                    case 1 -> { set(x, b + 1, z, slabDouble()); set(x, b + 2, z, candle); }
-                    default -> propBarrel(x, b + 1, z);
-                }
+                if (i % 2 == 0) { set(x, b + 1, z, slabDouble()); set(x, b + 2, z, candle); }
+                else propBarrel(x, b + 1, z);
             }
         }
 
@@ -487,12 +443,13 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 5 (k=4): champion hall. Armour stands with random gear (never netherite) between lantern braziers. */
+        /** Floor 5 (k=4): champion hall. Candle tables between lantern braziers. */
         void championHall(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
                 if (i % 2 == 0) {
-                    armorStand(x, b + 1, z);
+                    set(x, b + 1, z, slabDouble());
+                    set(x, b + 2, z, candle);
                 } else {
                     set(x, b + 1, z, t.trim);
                     set(x, b + 2, z, t.pillar);
@@ -514,12 +471,16 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floors 2-5: this floor's vault (opens with the key the floor's Trial Spawner ejects), framed like the boss vault. */
+        /** Tower position along the wall of floor k's vault: floor 1 sits beside the entrance door, the rest are centred. */
+        int vaultTt(int k) { return k == 0 ? 6 : 0; }
+
+        /** Every floor's vault (opens with the key the floor's Trial Spawner ejects), framed like the boss vault. */
         void floorVault(int k, int b, int vf) {
-            for (int y = b + 1; y <= b + 3; y++) { fs(vf, -1, I, y, t.pillar); fs(vf, 1, I, y, t.pillar); }
-            fs(vf, 0, I, b + 2, t.trim);
-            fs(vf, 0, I, b + 3, t.trim);
-            setBe(pfs(vf, 0, I, b + 1), Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, inward(vf)),
+            int vt = vaultTt(k);
+            for (int y = b + 1; y <= b + 3; y++) { fs(vf, vt - 1, I, y, t.pillar); fs(vf, vt + 1, I, y, t.pillar); }
+            fs(vf, vt, I, b + 2, t.trim);
+            fs(vf, vt, I, b + 3, t.trim);
+            setBe(pfs(vf, vt, I, b + 1), Blocks.VAULT.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, inward(vf)),
                     "{config:{key_item:{id:'minecraft:trial_key',count:1},loot_table:'dimtowers:vault/floor_" + t.id + "'}}");
         }
 
@@ -822,7 +783,7 @@ public class TowerPiece extends StructurePiece {
                 for (int f = 0; f < 4; f++) for (int tt : WIN) {
                     if (k == 0 && f == 0 && tt == 0) continue;
                     if (f >= 2 && tt == 0) continue;
-                    if (k >= 1 && tt == 0 && f == vf) continue;
+                    if (tt == vaultTt(k) && f == vf) continue;
                     if (k == 2 && rnd.nextInt(5) == 0) {
                         fs(f, tt, I, b + 1, Blocks.INFESTED_STONE_BRICKS.defaultBlockState());
                         fs(f, tt, I, b + 2, Blocks.INFESTED_STONE_BRICKS.defaultBlockState());
@@ -850,7 +811,7 @@ public class TowerPiece extends StructurePiece {
                     default -> championHall(b);
                 }
                 dress(k, b);
-                if (k >= 1) floorVault(k, b, vf);
+                floorVault(k, b, vf);
             }
 
             for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
@@ -883,11 +844,11 @@ public class TowerPiece extends StructurePiece {
             for (int side = 0; side < 2; side++) {
                 int wx = side == 0 ? I : -I;
                 Direction facing = side == 0 ? Direction.WEST : Direction.EAST;
-                for (int tt : new int[]{-6, 0, 6}) {
+                for (int tt : WIN) {
                     BlockPos p = new BlockPos(cx + wx, sTop + 1, cz + tt);
                     if (sTop + 1 > yMax || !box.isInside(p)) continue;
                     level.setBlock(p, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing), 2);
-                    RandomizableContainer.setBlockEntityLootTable(level, rnd, p, treasureKey());
+                    RandomizableContainer.setBlockEntityLootTable(level, rnd, p, abs(tt) == 12 ? outerChestKey() : treasureKey());
                 }
             }
 

@@ -11,6 +11,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -22,18 +23,20 @@ import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Slime;
-import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Evoker;
+import net.minecraft.world.entity.monster.Guardian;
+import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Vindicator;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.Drowned;
 import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 
 /** The tower boss mobs. Each one is a thin shell: gear/phases/waves live in BossKit, attacks in BossKit.SignatureGoal. */
 
@@ -301,44 +304,123 @@ class TowerDrowned extends Drowned {
     }
 }
 
-class TowerSpider extends Spider {
+class TowerGuardian extends Guardian {
     private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
-            BossEvent.BossBarColor.GREEN, BossEvent.BossBarOverlay.NOTCHED_10);
+            BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.NOTCHED_10);
 
-    public TowerSpider(EntityType<? extends Spider> type, Level level) {
+    public TowerGuardian(EntityType<? extends Guardian> type, Level level) {
         super(type, level);
         this.xpReward = BossKit.XP;
+        this.setNoGravity(true);
     }
 
     public static AttributeSupplier.Builder createBossAttributes() {
-        return BossKit.boost(Spider.createAttributes(), BossKit.DMG_SPIDER);
+        return BossKit.boost(Guardian.createAttributes(), BossKit.DMG_GUARDIAN);
     }
 
     @Override
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance diff, MobSpawnType type, @Nullable SpawnGroupData data) {
         SpawnGroupData d = super.finalizeSpawn(level, diff, type, data);
-        for (Entity e : new ArrayList<>(this.getPassengers())) e.discard();
-        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_SPIDER);
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_GUARDIAN);
         return d;
     }
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.WEB_SHOT, BossKit.Move.BROOD));
-        this.registerBossGoals();
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM));
+        this.goalSelector.addGoal(3, new BossKit.HoverGoal(this));
     }
-    protected void registerBossGoals() { }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
     @Override protected void customServerAiStep() {
         super.customServerAiStep();
-        this.bossAiStep();
-        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_SPIDER);
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_GUARDIAN);
         bossEvent.setProgress(getHealth() / getMaxHealth());
         BossKit.tick(this);
     }
-    protected void bossAiStep() { }
+    @Override public void setCustomName(@Nullable Component n) {
+        super.setCustomName(n);
+        bossEvent.setName(getDisplayName());
+    }
+}
+
+class TowerEvoker extends Evoker {
+    private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
+            BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.NOTCHED_10);
+
+    public TowerEvoker(EntityType<? extends Evoker> type, Level level) {
+        super(type, level);
+        this.xpReward = BossKit.XP;
+    }
+
+    public static AttributeSupplier.Builder createBossAttributes() {
+        return BossKit.boost(Evoker.createAttributes(), BossKit.DMG_EVOKER);
+    }
+
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance diff, MobSpawnType type, @Nullable SpawnGroupData data) {
+        SpawnGroupData d = super.finalizeSpawn(level, diff, type, data);
+        this.setPatrolLeader(false);
+        this.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_EVOKER);
+        return d;
+    }
+
+    @Override protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.FANG_WAVE));
+    }
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
+    @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
+    @Override protected void customServerAiStep() {
+        super.customServerAiStep();
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_EVOKER);
+        bossEvent.setProgress(getHealth() / getMaxHealth());
+        BossKit.tick(this);
+    }
+    @Override public void setCustomName(@Nullable Component n) {
+        super.setCustomName(n);
+        bossEvent.setName(getDisplayName());
+    }
+}
+
+class TowerRavager extends Ravager {
+    private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
+            BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
+
+    public TowerRavager(EntityType<? extends Ravager> type, Level level) {
+        super(type, level);
+        this.xpReward = BossKit.XP;
+    }
+
+    public static AttributeSupplier.Builder createBossAttributes() {
+        return BossKit.boost(Ravager.createAttributes(), BossKit.DMG_RAVAGER, 1.4);
+    }
+
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance diff, MobSpawnType type, @Nullable SpawnGroupData data) {
+        SpawnGroupData d = super.finalizeSpawn(level, diff, type, data);
+        this.setPatrolLeader(false);
+        this.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_RAVAGER);
+        return d;
+    }
+
+    @Override protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.GROUND_SLAM));
+    }
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
+    @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
+    @Override protected void customServerAiStep() {
+        super.customServerAiStep();
+        BossKit.setup(this, BossKit.Weapon.NONE, BossKit.DMG_RAVAGER);
+        bossEvent.setProgress(getHealth() / getMaxHealth());
+        BossKit.tick(this);
+    }
     @Override public void setCustomName(@Nullable Component n) {
         super.setCustomName(n);
         bossEvent.setName(getDisplayName());

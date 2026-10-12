@@ -7,9 +7,11 @@
     "dimtowers:tower_piglin",
     "dimtowers:tower_vindicator",
     "dimtowers:tower_blaze",
-    "dimtowers:tower_spider",
     "dimtowers:tower_ender",
     "dimtowers:tower_slime",
-    "dimtowers:tower_drowned"
+    "dimtowers:tower_drowned",
+    "dimtowers:tower_guardian",
+    "dimtowers:tower_evoker",
+    "dimtowers:tower_ravager"
   ]
 }
