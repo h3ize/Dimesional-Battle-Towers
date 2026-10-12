@@ -1,16 +1,25 @@
 package com.example.dimtowers;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -37,6 +46,7 @@ public class DimensionalTowers {
             PIECE_TYPES.register("tower_piece", () -> (StructurePieceType) TowerPiece::new);
 
     public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, MOD_ID);
+
     public static final DeferredHolder<EntityType<?>, EntityType<TowerBoss>> TOWER_BOSS =
             ENTITIES.register("tower_boss", () -> EntityType.Builder.<TowerBoss>of(TowerBoss::new, MobCategory.MONSTER)
                     .sized(0.7F, 2.4F).fireImmune().clientTrackingRange(10).build("tower_boss"));
@@ -46,15 +56,12 @@ public class DimensionalTowers {
     public static final DeferredHolder<EntityType<?>, EntityType<TowerSkeleton>> TOWER_SKELETON =
             ENTITIES.register("tower_skeleton", () -> EntityType.Builder.<TowerSkeleton>of(TowerSkeleton::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.99F).fireImmune().clientTrackingRange(10).build("tower_skeleton"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerPiglin>> TOWER_PIGLIN =
             ENTITIES.register("tower_piglin", () -> EntityType.Builder.<TowerPiglin>of(TowerPiglin::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_piglin"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerVindicator>> TOWER_VINDICATOR =
             ENTITIES.register("tower_vindicator", () -> EntityType.Builder.<TowerVindicator>of(TowerVindicator::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_vindicator"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerBlaze>> TOWER_BLAZE =
             ENTITIES.register("tower_blaze", () -> EntityType.Builder.<TowerBlaze>of(TowerBlaze::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.8F).fireImmune().clientTrackingRange(10).build("tower_blaze"));
@@ -80,26 +87,20 @@ public class DimensionalTowers {
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
     }
 
-
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
         e.getTrades().get(3).add((trader, random) -> {
-            ItemStack emeralds = new ItemStack(Items.EMERALD, 20);
-            ItemStack map = MapItem.create(
-                    BuiltInRegistries.MAP_DECORATIONS.get(TOWERS),
-                    "filled_map.dimtowers.tower",
-                    MapDecorationTypes.RED_X,
-                    3,
-                    15
-            );
+            if (!(trader.level() instanceof ServerLevel level)) return null;
 
-            return new MerchantOffer(
-                    new ItemStack(Items.EMERALD, 20),
-                    map,
-                    15,
-                    3,
-                    0.2F
-            );
+            BlockPos pos = level.findNearestMapStructure(TOWERS, trader.blockPosition(), 100, true);
+            if (pos == null) return null;
+
+            ItemStack map = MapItem.create(level, pos.getX(), pos.getZ(), (byte) 2, true, true);
+            MapItem.renderBiomePreviewMap(level, map);
+            MapItemSavedData.addTargetDecoration(map, pos, "+", MapDecorationTypes.RED_X);
+            map.set(DataComponents.ITEM_NAME, Component.translatable("filled_map.dimtowers.tower"));
+
+            return new MerchantOffer(new ItemCost(Items.EMERALD, 20), map, 15, 3, 0.2F);
         });
     }
 
