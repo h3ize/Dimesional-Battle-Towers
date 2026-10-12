@@ -569,36 +569,25 @@ public class TowerPiece extends StructurePiece {
         }
 
         /**
-         * Two-wide switchback staircase with a solid stringer and a balustrade on the room side. Every walkable step is a
-         * stair block with a solid fill beneath it and a fully cleared shaft above it, and the balustrade stops short of the
-         * top so nothing pokes into the floor above. Safe to call again after the rest of the tower is built.
+         * Open, floating two-wide staircase running along the wall: bare stair blocks with nothing underneath, no
+         * balustrade and no stringer. The shaft above every step is fully cleared so nothing pokes into the floor above.
+         * Safe to call again after the rest of the tower is built.
          */
         void stairs(int k) {
             int b = s(k);
             boolean even = k % 2 == 0;
             int zRow = even ? -(R - 3) : (R - 3), zIn = even ? -(R - 4) : (R - 4);
-            int zRail = even ? zIn + 1 : zIn - 1;
             Direction dir = even ? Direction.EAST : Direction.WEST;
             int startX = even ? -(H - 1) : (H - 1), step = even ? 1 : -1;
             final BlockState stair = stairBlock(dir, false);
-            final BlockState slabBot = t.slab.defaultBlockState();
-            final BlockState wallPiece = t.wallPiece.defaultBlockState();
             for (int i = 0; i < H; i++) {
                 int x = startX + step * i;
                 int y = b + 1 + i;
                 int open = i < H - 1 ? b + H + 3 : y + 3;
                 for (int z : new int[]{zRow, zIn}) {
-                    for (int yy = b + 1; yy < y; yy++) set(x, yy, z, t.floorAlt);
+                    for (int yy = b + 1; yy < y; yy++) clr(x, yy, z);
                     set(x, y, z, stair);
                     for (int yy = y + 1; yy <= open; yy++) clr(x, yy, z);
-                }
-                for (int yy = b + 1; yy < y; yy++) set(x, yy, zRail, t.trim);
-                set(x, y, zRail, stair);
-                if (i <= H - 4) {
-                    set(x, y + 1, zRail, wallPiece);
-                    set(x, y + 2, zRail, i % 4 == 2 ? t.lanternStanding : slabBot);
-                } else {
-                    for (int yy = y + 1; yy < b + H; yy++) set(x, yy, zRail, t.trim);
                 }
             }
             int endX = startX + step * (H - 1);
@@ -607,17 +596,13 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Newel post and carpet at the foot of a floor's staircase. */
+        /** Carpet at the foot of a floor's staircase. */
         void stairFoot(int k) {
             int b = s(k);
             boolean even = k % 2 == 0;
             int zRow = even ? -(R - 3) : (R - 3), zIn = even ? -(R - 4) : (R - 4);
-            int zRail = even ? zIn + 1 : zIn - 1;
             int startX = even ? -(H - 1) : (H - 1), step = even ? 1 : -1;
             int footX = startX - step;
-            set(footX, b + 1, zRail, t.trim);
-            set(footX, b + 2, zRail, t.pillar);
-            set(footX, b + 3, zRail, t.lanternStanding);
             set(footX, b + 1, zRow, carpetAlt());
             set(footX, b + 1, zIn, carpetAlt());
         }
@@ -881,13 +866,16 @@ public class TowerPiece extends StructurePiece {
                         + "loot_table:\"dimtowers:vault/reward_" + t.id + "\"}}");
             }
 
-            int[][] cp = {{R - 3, R - 3, 0}, {-(R - 3), R - 3, 1}, {I, -6, 0}, {-I, -6, 1}};
-            for (int[] c : cp) {
-                BlockPos p = new BlockPos(cx + c[0], sTop + 1, cz + c[1]);
-                if (sTop + 1 > yMax || !box.isInside(p)) continue;
-                level.setBlock(p, Blocks.CHEST.defaultBlockState()
-                        .setValue(ChestBlock.FACING, c[2] == 0 ? Direction.WEST : Direction.EAST), 2);
-                RandomizableContainer.setBlockEntityLootTable(level, rnd, p, treasureKey());
+            // Treasure chests in the three centre bays (2nd, 3rd, 4th of the five) on the east and west walls.
+            for (int side = 0; side < 2; side++) {
+                int wx = side == 0 ? I : -I;
+                Direction facing = side == 0 ? Direction.WEST : Direction.EAST;
+                for (int tt : new int[]{-6, 0, 6}) {
+                    BlockPos p = new BlockPos(cx + wx, sTop + 1, cz + tt);
+                    if (sTop + 1 > yMax || !box.isInside(p)) continue;
+                    level.setBlock(p, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing), 2);
+                    RandomizableContainer.setBlockEntityLootTable(level, rnd, p, treasureKey());
+                }
             }
 
             for (int k = 0; k < FLOORS; k++) stairs(k);
