@@ -8,7 +8,7 @@ displayName="Dimensional Towers"
 authors="AJ"
 description='''Dimensional Towers adds huge, themed boss towers to the world. Climb five floors of spawners, loot and decorated halls, then face a boss at the top and claim the vault.
 
-Towers exist for the Overworld, Nether and End, plus biome variants: frozen, desert, oak forest, dark forest, jungle, swamp, taiga, badlands and pillager (with a Vindicator boss), and a piglin tower in the Nether.'''
+Nineteen towers: Overworld, Nether, End, plus biome variants (frozen, desert, oak, dark forest, jungle, swamp, taiga, badlands, pillager, ocean, deep dark, cherry, savanna), and piglin, crimson and warped towers in the Nether. Ten bosses, themed minion waves, clearable trial-spawner floors with vaults, traps and secret rooms.'''
 [[dependencies.dimtowers]]
 modId="neoforge"
 type="required"

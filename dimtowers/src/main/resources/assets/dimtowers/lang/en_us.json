@@ -9,5 +9,17 @@
   "advancement.dimtowers.slay_boss.description": "Slay a tower boss",
   "advancement.dimtowers.slay_all_bosses.title": "Master of the Towers",
   "advancement.dimtowers.slay_all_bosses.description": "Slay every type of tower boss",
-  "entity.dimtowers.tower_vindicator": "Axe Warlord"
+  "entity.dimtowers.tower_vindicator": "Axe Warlord",
+  "entity.dimtowers.tower_blaze": "Blaze King",
+  "entity.dimtowers.tower_spider": "Spider Queen",
+  "entity.dimtowers.tower_ender": "Void Stalker",
+  "entity.dimtowers.tower_slime": "Slime King",
+  "entity.dimtowers.tower_drowned": "Tidal Tyrant",
+  "filled_map.dimtowers.tower": "Tower Map",
+  "message.dimtowers.wave": "%s has summoned minions!",
+  "message.dimtowers.enrage": "%s is enraged!",
+  "advancement.dimtowers.explorer.title": "Tower Cartographer",
+  "advancement.dimtowers.explorer.description": "Visit every kind of tower",
+  "advancement.dimtowers.vault_master.title": "Keyring",
+  "advancement.dimtowers.vault_master.description": "Open a tower vault with a trial key and an ominous trial key"
 }

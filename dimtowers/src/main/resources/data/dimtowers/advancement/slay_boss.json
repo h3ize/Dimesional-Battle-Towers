@@ -85,6 +85,76 @@
           }
         ]
       }
+    },
+    "tower_blaze": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_blaze"
+            }
+          }
+        ]
+      }
+    },
+    "tower_spider": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_spider"
+            }
+          }
+        ]
+      }
+    },
+    "tower_ender": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_ender"
+            }
+          }
+        ]
+      }
+    },
+    "tower_slime": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_slime"
+            }
+          }
+        ]
+      }
+    },
+    "tower_drowned": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "dimtowers:tower_drowned"
+            }
+          }
+        ]
+      }
     }
   },
   "requirements": [
@@ -93,7 +163,12 @@
       "tower_zombie",
       "tower_skeleton",
       "tower_piglin",
-      "tower_vindicator"
+      "tower_vindicator",
+      "tower_blaze",
+      "tower_spider",
+      "tower_ender",
+      "tower_slime",
+      "tower_drowned"
     ]
   ]
 }

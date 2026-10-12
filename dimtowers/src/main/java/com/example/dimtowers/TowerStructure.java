@@ -47,9 +47,8 @@ public class TowerStructure extends Structure {
         LevelHeightAccessor ha = ctx.heightAccessor();
         RandomState rs = ctx.randomState();
 
-        if (theme == Theme.NETHER || theme == Theme.PIGLIN) {
+        if (theme.nether) {
             NoiseColumn col = gen.getBaseColumn(cx, cz, ha, rs);
-            // tower is ~70 blocks tall, so start low enough to stay under the bedrock roof
             for (int y = 60; y >= 34; y--) {
                 BlockState st = col.getBlock(y);
                 if (st.isAir() || !st.getFluidState().isEmpty()) continue;
@@ -60,7 +59,7 @@ public class TowerStructure extends Structure {
             return Integer.MIN_VALUE;
         }
         boolean end = theme == Theme.END;
-        int[] off = {0, 0, 10, 10, -10, 10, 10, -10, -10, -10};
+        int[] off = {0, 0, 12, 12, -12, 12, 12, -12, -12, -12};
         int max = Integer.MIN_VALUE, min = Integer.MAX_VALUE;
         for (int i = 0; i < off.length; i += 2) {
             int x = cx + off[i], z = cz + off[i + 1];

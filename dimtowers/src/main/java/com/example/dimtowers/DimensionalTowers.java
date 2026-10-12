@@ -1,19 +1,30 @@
 package com.example.dimtowers;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(DimensionalTowers.MOD_ID)
 public class DimensionalTowers {
     public static final String MOD_ID = "dimtowers";
+
+    public static final TagKey<Structure> TOWERS =
+            TagKey.create(Registries.STRUCTURE, ResourceLocation.fromNamespaceAndPath(MOD_ID, "towers"));
 
     public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
             DeferredRegister.create(Registries.STRUCTURE_TYPE, MOD_ID);
@@ -44,11 +55,35 @@ public class DimensionalTowers {
             ENTITIES.register("tower_vindicator", () -> EntityType.Builder.<TowerVindicator>of(TowerVindicator::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_vindicator"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerBlaze>> TOWER_BLAZE =
+            ENTITIES.register("tower_blaze", () -> EntityType.Builder.<TowerBlaze>of(TowerBlaze::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.8F).fireImmune().clientTrackingRange(10).build("tower_blaze"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerSpider>> TOWER_SPIDER =
+            ENTITIES.register("tower_spider", () -> EntityType.Builder.<TowerSpider>of(TowerSpider::new, MobCategory.MONSTER)
+                    .sized(1.4F, 0.9F).fireImmune().clientTrackingRange(10).build("tower_spider"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerEnder>> TOWER_ENDER =
+            ENTITIES.register("tower_ender", () -> EntityType.Builder.<TowerEnder>of(TowerEnder::new, MobCategory.MONSTER)
+                    .sized(0.6F, 2.9F).fireImmune().clientTrackingRange(10).build("tower_ender"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerSlime>> TOWER_SLIME =
+            ENTITIES.register("tower_slime", () -> EntityType.Builder.<TowerSlime>of(TowerSlime::new, MobCategory.MONSTER)
+                    .sized(0.52F, 0.52F).fireImmune().clientTrackingRange(10).build("tower_slime"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TowerDrowned>> TOWER_DROWNED =
+            ENTITIES.register("tower_drowned", () -> EntityType.Builder.<TowerDrowned>of(TowerDrowned::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_drowned"));
+
     public DimensionalTowers(IEventBus modBus) {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
         ENTITIES.register(modBus);
         modBus.addListener(this::attributes);
+        NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(this::villagerTrades);
+    }
+
+    private void villagerTrades(VillagerTradesEvent e) {
+        if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
+        e.getTrades().get(3).add(new VillagerTrades.TreasureMapForEmeralds(
+                20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
     }
 
     private void attributes(EntityAttributeCreationEvent e) {
@@ -57,5 +92,10 @@ public class DimensionalTowers {
         e.put(TOWER_SKELETON.get(), TowerSkeleton.createBossAttributes().build());
         e.put(TOWER_PIGLIN.get(), TowerPiglin.createBossAttributes().build());
         e.put(TOWER_VINDICATOR.get(), TowerVindicator.createBossAttributes().build());
+        e.put(TOWER_BLAZE.get(), TowerBlaze.createBossAttributes().build());
+        e.put(TOWER_SPIDER.get(), TowerSpider.createBossAttributes().build());
+        e.put(TOWER_ENDER.get(), TowerEnder.createBossAttributes().build());
+        e.put(TOWER_SLIME.get(), TowerSlime.createBossAttributes().build());
+        e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());
     }
 }

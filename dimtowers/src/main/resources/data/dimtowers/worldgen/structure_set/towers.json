@@ -51,6 +51,30 @@
     {
       "structure": "dimtowers:badlands_tower",
       "weight": 2
+    },
+    {
+      "structure": "dimtowers:ocean_tower",
+      "weight": 2
+    },
+    {
+      "structure": "dimtowers:deep_dark_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:cherry_tower",
+      "weight": 2
+    },
+    {
+      "structure": "dimtowers:savanna_tower",
+      "weight": 2
+    },
+    {
+      "structure": "dimtowers:crimson_tower",
+      "weight": 1
+    },
+    {
+      "structure": "dimtowers:warped_tower",
+      "weight": 1
     }
   ],
   "placement": {
