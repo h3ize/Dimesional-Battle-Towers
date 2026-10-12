@@ -1,6 +1,7 @@
 package com.example.dimtowers;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TrialSpawnerBlockEntity;
@@ -69,7 +70,7 @@ public final class FloorMobs {
      */
     public static void onChunkLoad(ChunkEvent.Load e) {
         if (!(e.getLevel() instanceof ServerLevel level)) return;
-        var chunk = e.getChunk();
+        if (!(e.getChunk() instanceof LevelChunk chunk)) return;
         level.getServer().execute(() -> {
             try {
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
