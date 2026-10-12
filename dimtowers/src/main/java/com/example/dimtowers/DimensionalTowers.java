@@ -91,6 +91,7 @@ public class DimensionalTowers {
         NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
+        NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
     }
 

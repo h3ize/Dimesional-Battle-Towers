@@ -464,19 +464,13 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 3 (k=2): trophy hall. Mob heads on trim-and-pillar pedestals, with candlesticks between them. */
+        /** Floor 3 (k=2): candle hall. Lanterns and candlesticks alternating on trim-and-pillar pedestals. */
         void trophyHall(int b) {
-            BlockState[] heads = {Blocks.SKELETON_SKULL.defaultBlockState(), Blocks.ZOMBIE_HEAD.defaultBlockState(),
-                    Blocks.CREEPER_HEAD.defaultBlockState(), Blocks.PIGLIN_HEAD.defaultBlockState()};
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
                 set(x, b + 1, z, t.trim);
                 set(x, b + 2, z, t.pillar);
-                if (i % 2 == 0) {
-                    set(x, b + 3, z, heads[(i / 2) % heads.length].setValue(BlockStateProperties.ROTATION_16, x > 0 ? 4 : 12));
-                } else {
-                    set(x, b + 3, z, candle);
-                }
+                set(x, b + 3, z, i % 2 == 0 ? t.lanternStanding : candle);
             }
         }
 
@@ -607,6 +601,8 @@ public class TowerPiece extends StructurePiece {
                 int open = i < H - 1 ? b + H + 3 : y + 3;
                 for (int z : new int[]{zRow, zIn}) {
                     for (int yy = b + 1; yy < y; yy++) clr(x, yy, z);
+                    // The runner passes under the raised steps: keep it continuous instead of leaving bare floor.
+                    if (i >= 1 && abs(x) <= 1) set(x, b + 1, z, x == 0 ? carpet() : carpetAlt());
                     set(x, y, z, stair);
                     for (int yy = y + 1; yy <= open; yy++) clr(x, yy, z);
                 }

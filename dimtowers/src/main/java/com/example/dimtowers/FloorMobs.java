@@ -1,5 +1,10 @@
 package com.example.dimtowers;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.TrialSpawnerBlockEntity;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -53,5 +58,29 @@ public final class FloorMobs {
             mob.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, player);
             mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, player.getUUID(), 600L);
         }
+    }
+
+    /** Floor trial spawners cool down for 1 hour (72000 ticks). */
+    public static final int FLOOR_COOLDOWN = 72000;
+
+    /**
+     * Towers generated before the cooldown change keep the old value baked into their spawner block entities, so fix
+     * floor spawners (recognised by the dt_floor tag in their spawn data) whenever their chunk loads.
+     */
+    public static void onChunkLoad(ChunkEvent.Load e) {
+        if (!(e.getLevel() instanceof ServerLevel level)) return;
+        var chunk = e.getChunk();
+        level.getServer().execute(() -> {
+            try {
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    if (!(be instanceof TrialSpawnerBlockEntity)) continue;
+                    CompoundTag tag = be.saveWithoutMetadata(level.registryAccess());
+                    if (tag.getInt("target_cooldown_length") == FLOOR_COOLDOWN || !tag.toString().contains("dt_floor")) continue;
+                    tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
+                    be.loadWithComponents(tag, level.registryAccess());
+                    be.setChanged();
+                }
+            } catch (Exception ignored) { }
+        });
     }
 }
