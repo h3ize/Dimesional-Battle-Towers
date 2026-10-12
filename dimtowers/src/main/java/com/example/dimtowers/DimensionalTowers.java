@@ -1,16 +1,30 @@
 package com.example.dimtowers;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
+import net.minecraft.world.level.saveddata.maps.MapDecorationType;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -18,6 +32,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.jetbrains.annotations.Nullable;
 
 @Mod(DimensionalTowers.MOD_ID)
 public class DimensionalTowers {
@@ -46,15 +61,12 @@ public class DimensionalTowers {
     public static final DeferredHolder<EntityType<?>, EntityType<TowerSkeleton>> TOWER_SKELETON =
             ENTITIES.register("tower_skeleton", () -> EntityType.Builder.<TowerSkeleton>of(TowerSkeleton::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.99F).fireImmune().clientTrackingRange(10).build("tower_skeleton"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerPiglin>> TOWER_PIGLIN =
             ENTITIES.register("tower_piglin", () -> EntityType.Builder.<TowerPiglin>of(TowerPiglin::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_piglin"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerVindicator>> TOWER_VINDICATOR =
             ENTITIES.register("tower_vindicator", () -> EntityType.Builder.<TowerVindicator>of(TowerVindicator::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.95F).fireImmune().clientTrackingRange(10).build("tower_vindicator"));
-
     public static final DeferredHolder<EntityType<?>, EntityType<TowerBlaze>> TOWER_BLAZE =
             ENTITIES.register("tower_blaze", () -> EntityType.Builder.<TowerBlaze>of(TowerBlaze::new, MobCategory.MONSTER)
                     .sized(0.6F, 1.8F).fireImmune().clientTrackingRange(10).build("tower_blaze"));
@@ -82,7 +94,8 @@ public class DimensionalTowers {
 
     private void villagerTrades(VillagerTradesEvent e) {
         if (e.getType() != VillagerProfession.CARTOGRAPHER) return;
-        e.getTrades().get(3).add(new VillagerTrades.TreasureMapForEmeralds(
+        // TreasureMapForEmeralds is package-private in 1.21.1 — use public reimplementation
+        e.getTrades().get(3).add(new StructureMapTrade(
                 20, TOWERS, "filled_map.dimtowers.tower", MapDecorationTypes.RED_X, 3, 15));
     }
 
@@ -97,5 +110,47 @@ public class DimensionalTowers {
         e.put(TOWER_ENDER.get(), TowerEnder.createBossAttributes().build());
         e.put(TOWER_SLIME.get(), TowerSlime.createBossAttributes().build());
         e.put(TOWER_DROWNED.get(), TowerDrowned.createBossAttributes().build());
+    }
+
+    private static final class StructureMapTrade implements VillagerTrades.ItemListing {
+        private final int emeraldCost;
+        private final TagKey<Structure> destination;
+        private final String displayName;
+        private final Holder<MapDecorationType> destinationType;
+        private final int maxUses;
+        private final int villagerXp;
+
+        StructureMapTrade(int emeraldCost, TagKey<Structure> destination, String displayName,
+                          Holder<MapDecorationType> destinationType, int maxUses, int villagerXp) {
+            this.emeraldCost = emeraldCost;
+            this.destination = destination;
+            this.displayName = displayName;
+            this.destinationType = destinationType;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+        }
+
+        @Override
+        @Nullable
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            if (!(trader.level() instanceof ServerLevel serverLevel)) {
+                return null;
+            }
+            BlockPos structurePos = serverLevel.findNearestMapStructure(this.destination, trader.blockPosition(), 100, true);
+            if (structurePos == null) {
+                return null;
+            }
+            ItemStack map = MapItem.create(serverLevel, structurePos.getX(), structurePos.getZ(), (byte) 2, true, true);
+            MapItem.renderBiomePreviewMap(serverLevel, map);
+            MapItemSavedData.addTargetDecoration(map, structurePos, "+", this.destinationType);
+            map.set(DataComponents.ITEM_NAME, Component.translatable(this.displayName));
+            return new MerchantOffer(
+                    new ItemCost(Items.EMERALD, this.emeraldCost),
+                    java.util.Optional.of(new ItemCost(Items.COMPASS)),
+                    map,
+                    this.maxUses,
+                    this.villagerXp,
+                    0.2F);
+        }
     }
 }
