@@ -34,7 +34,7 @@ public enum Theme {
             Blocks.END_STONE_BRICKS, Blocks.PURPUR_BLOCK, Blocks.OBSIDIAN, Blocks.CRYING_OBSIDIAN,
             Blocks.END_STONE_BRICK_STAIRS, Blocks.END_STONE_BRICK_SLAB, Blocks.END_STONE_BRICK_WALL,
             Blocks.PEARLESCENT_FROGLIGHT.defaultBlockState(),
-            Blocks.PURPLE_STAINED_GLASS_PANE, Blocks.SOUL_LANTERN, b("ender", "boss", "shulker"),
+            Blocks.PURPLE_STAINED_GLASS_PANE, Blocks.SOUL_LANTERN, b("ender", "boss"),
             List.of(EntityType.ENDERMITE, EntityType.ENDERMITE, EntityType.SHULKER, EntityType.ENDERMAN, EntityType.ENDERMAN),
             "spire", "plenty"),
     PIGLIN("piglin",
