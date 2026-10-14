@@ -450,7 +450,7 @@ public final class BossKit {
                 case PULL -> {
                     if (d2 > 400 || d2 < 36) return false;
                     begin(i, 15, enraged ? 180 : 280);
-                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_1, 2.0f, 0.6f);
+                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_1.value(), 2.0f, 0.6f);
                     return true;
                 }
                 case RALLY -> {
@@ -692,7 +692,7 @@ public final class BossKit {
                         e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0));
                         sl.sendParticles(ParticleTypes.CRIT, e.getX(), e.getY(1.0), e.getZ(), 15, 0.4, 0.6, 0.4, 0.1);
                     }
-                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_3, 2.0f, 0.7f);
+                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_3.value(), 2.0f, 0.7f);
                 }
                 case WAR_CRY -> {
                     int lvl = enraged ? 1 : 0;
