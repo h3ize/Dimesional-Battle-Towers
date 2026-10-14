@@ -38,8 +38,6 @@ import net.minecraft.world.level.storage.loot.LootTable;
 
 import javax.annotation.Nullable;
 
-/** The tower boss mobs. Each one is a thin shell: gear/phases/waves live in BossKit, attacks in BossKit.SignatureGoal. */
-
 class TowerZombie extends Zombie {
     private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
@@ -66,7 +64,7 @@ class TowerZombie extends Zombie {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM, BossKit.Move.PULL, BossKit.Move.RALLY, BossKit.Move.LIFE_DRAIN, BossKit.Move.LEAP));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -109,7 +107,7 @@ class TowerSkeleton extends Skeleton {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.ARROW_VOLLEY));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.ARROW_VOLLEY, BossKit.Move.BACKSTEP, BossKit.Move.RALLY, BossKit.Move.STORM_CALL, BossKit.Move.CURSE));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -152,7 +150,7 @@ class TowerPiglin extends PiglinBrute {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.CALL_HOGLINS));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.CALL_HOGLINS, BossKit.Move.WAR_CRY, BossKit.Move.CHARGE, BossKit.Move.FIRE_NOVA, BossKit.Move.GROUND_SLAM, BossKit.Move.LEAP));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -195,7 +193,7 @@ class TowerVindicator extends Vindicator {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.CHARGE, BossKit.Move.WAR_CRY, BossKit.Move.BLINK, BossKit.Move.GROUND_SLAM, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -238,7 +236,7 @@ class TowerBlaze extends Blaze {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BLAZE_BARRAGE, BossKit.Move.FIRE_NOVA));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BLAZE_BARRAGE, BossKit.Move.FIRE_NOVA, BossKit.Move.FIRE_RAIN, BossKit.Move.METEOR, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -284,7 +282,7 @@ class TowerDrowned extends Drowned {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.TRIDENT_FAN));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.TRIDENT_FAN, BossKit.Move.PULL, BossKit.Move.RALLY, BossKit.Move.STORM_CALL, BossKit.Move.ROAR, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -328,7 +326,7 @@ class TowerGuardian extends Guardian {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM, BossKit.Move.ROAR, BossKit.Move.RALLY, BossKit.Move.LIFE_DRAIN, BossKit.Move.CURSE, BossKit.Move.STORM_CALL));
         this.goalSelector.addGoal(3, new BossKit.HoverGoal(this));
     }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
@@ -370,7 +368,7 @@ class TowerEvoker extends Evoker {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.FANG_WAVE));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.FANG_WAVE, BossKit.Move.FANG_STORM, BossKit.Move.FANG_RING, BossKit.Move.CURSE, BossKit.Move.VEX_SWARM, BossKit.Move.STORM_CALL, BossKit.Move.SHIELD, BossKit.Move.LIFE_DRAIN));
     }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
@@ -411,7 +409,7 @@ class TowerRavager extends Ravager {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.GROUND_SLAM));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.GROUND_SLAM, BossKit.Move.CHARGE, BossKit.Move.ROAR, BossKit.Move.PULL, BossKit.Move.RALLY));
     }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bossEvent.removePlayer(p); }
@@ -440,16 +438,13 @@ class TowerEnder extends EnderMan {
         return BossKit.boost(EnderMan.createAttributes(), BossKit.DMG_ENDER);
     }
 
-    /** Endermen only fight players who stare at them; the boss hunts anyone nearby. */
     protected void registerBossGoals() {
         this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, true));
         this.goalSelector.getAvailableGoals().removeIf(w -> w.getGoal().getClass().getSimpleName().contains("Block"));
     }
 
-    /** Vanilla endermen teleport away from the sun and from damage, which would carry the boss out of the arena. */
     @Override protected boolean teleport() { return false; }
 
-    /** Vanilla endermen are immune to projectiles; convert them to ordinary attacks so bows and tridents work. */
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.is(DamageTypeTags.IS_PROJECTILE) && source.getEntity() instanceof LivingEntity shooter) {
@@ -469,7 +464,7 @@ class TowerEnder extends EnderMan {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BLINK, BossKit.Move.DRAGON_BREATH));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BLINK, BossKit.Move.DRAGON_BREATH, BossKit.Move.PULL, BossKit.Move.CURSE, BossKit.Move.STORM_CALL, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }
@@ -503,12 +498,11 @@ class TowerSlime extends Slime {
         return BossKit.boost(Monster.createMonsterAttributes(), BossKit.DMG_SLIME, 1.0);
     }
 
-    /** Vanilla resets max health to size*size every time the size changes, so re-apply the boss values. */
     @Override
     public void setSize(int size, boolean resetHealth) {
         super.setSize(size, resetHealth);
         if (size >= KING_SIZE) {
-            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(500.0);
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossKit.HEALTH);
             this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(BossKit.DMG_SLIME);
             this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.32);
             this.xpReward = BossKit.XP;
@@ -516,7 +510,6 @@ class TowerSlime extends Slime {
         }
     }
 
-    /** Vanilla slimes above size 1 drop nothing. */
     @Override
     protected ResourceKey<LootTable> getDefaultLootTable() { return this.getType().getDefaultLootTable(); }
 
@@ -531,10 +524,9 @@ class TowerSlime extends Slime {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.GROUND_SLAM, BossKit.Move.LEAP, BossKit.Move.RALLY, BossKit.Move.ROAR, BossKit.Move.SHIELD, BossKit.Move.CHARGE));
     }
 
-    /** Splits when hit: sheds a pair of small slimes, at most once every three seconds. */
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean r = super.hurt(source, amount);
@@ -557,7 +549,6 @@ class TowerSlime extends Slime {
         return r;
     }
 
-    /** On death vanilla would split into more copies of THIS entity type (more bosses); make it split into nothing instead. */
     @Override
     public void remove(Entity.RemovalReason reason) {
         if (this.isDeadOrDying() && this.getSize() > 1) {

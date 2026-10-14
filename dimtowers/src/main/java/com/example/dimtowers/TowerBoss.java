@@ -39,7 +39,7 @@ public class TowerBoss extends WitherSkeleton {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.WITHER_SKULLS));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.WITHER_SKULLS, BossKit.Move.CURSE, BossKit.Move.WITHER_NOVA, BossKit.Move.GROUND_SLAM, BossKit.Move.LIFE_DRAIN, BossKit.Move.SHIELD));
     }
 
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }

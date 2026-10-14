@@ -17,8 +17,7 @@ public enum Theme {
             Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILE_SLAB, Blocks.DEEPSLATE_TILE_WALL,
             Blocks.COPPER_BULB.defaultBlockState().setValue(BlockStateProperties.LIT, true),
             Blocks.GRAY_STAINED_GLASS_PANE, Blocks.SOUL_LANTERN, b("zombie", "skeleton", "evoker"),
-            List.of(EntityType.ZOMBIE, EntityType.SILVERFISH, EntityType.SKELETON, EntityType.SPIDER, EntityType.CAVE_SPIDER,
-                    EntityType.CREEPER, EntityType.WITCH, EntityType.BOGGED, EntityType.BREEZE),
+            List.of(EntityType.ZOMBIE, EntityType.SILVERFISH, EntityType.SKELETON, EntityType.SPIDER, EntityType.CAVE_SPIDER, EntityType.WITCH, EntityType.BOGGED, EntityType.BREEZE),
             "ward", "skull"),
     NETHER("nether",
             Blocks.NETHER_BRICKS, Blocks.CRACKED_NETHER_BRICKS, Blocks.CHISELED_NETHER_BRICKS, Blocks.RED_NETHER_BRICKS,
@@ -60,7 +59,7 @@ public enum Theme {
             Blocks.GLOWSTONE.defaultBlockState(),
             Blocks.YELLOW_STAINED_GLASS_PANE, Blocks.LANTERN, b("zombie", "ravager"),
             List.of(EntityType.HUSK, EntityType.HUSK, EntityType.SKELETON, EntityType.SPIDER,
-                    EntityType.CAVE_SPIDER, EntityType.CREEPER, EntityType.WITCH),
+                    EntityType.CAVE_SPIDER, EntityType.WITCH),
             "dune", "miner"),
     OAK("oak",
             Blocks.OAK_PLANKS, Blocks.STRIPPED_OAK_LOG, Blocks.OAK_LOG, Blocks.DARK_OAK_PLANKS,
@@ -68,7 +67,7 @@ public enum Theme {
             Blocks.OAK_STAIRS, Blocks.OAK_SLAB, Blocks.OAK_FENCE,
             Blocks.OCHRE_FROGLIGHT.defaultBlockState(),
             Blocks.GREEN_STAINED_GLASS_PANE, Blocks.LANTERN, b("vindicator", "zombie"),
-            List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.CREEPER,
+            List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER,
                     EntityType.WITCH),
             "raiser", "plenty"),
     PILLAGER("pillager",
@@ -95,8 +94,7 @@ public enum Theme {
             Blocks.MOSSY_STONE_BRICK_STAIRS, Blocks.MOSSY_STONE_BRICK_SLAB, Blocks.MOSSY_COBBLESTONE_WALL,
             Blocks.VERDANT_FROGLIGHT.defaultBlockState(),
             Blocks.LIME_STAINED_GLASS_PANE, Blocks.LANTERN, b("slime", "ravager"),
-            List.of(EntityType.ZOMBIE, EntityType.SLIME, EntityType.SKELETON, EntityType.SPIDER, EntityType.CAVE_SPIDER,
-                    EntityType.CREEPER),
+            List.of(EntityType.ZOMBIE, EntityType.SLIME, EntityType.SKELETON, EntityType.SPIDER, EntityType.CAVE_SPIDER),
             "wild", "brewer"),
     SWAMP("swamp",
             Blocks.MUD_BRICKS, Blocks.MOSSY_STONE_BRICKS, Blocks.MANGROVE_LOG, Blocks.MANGROVE_PLANKS,
@@ -122,8 +120,7 @@ public enum Theme {
             Blocks.RED_SANDSTONE_STAIRS, Blocks.RED_SANDSTONE_SLAB, Blocks.RED_SANDSTONE_WALL,
             Blocks.GLOWSTONE.defaultBlockState(),
             Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.LANTERN, b("zombie", "boss"),
-            List.of(EntityType.HUSK, EntityType.SKELETON, EntityType.CAVE_SPIDER, EntityType.SPIDER,
-                    EntityType.CREEPER, EntityType.WITCH),
+            List.of(EntityType.HUSK, EntityType.SKELETON, EntityType.CAVE_SPIDER, EntityType.SPIDER, EntityType.WITCH),
             "bolt", "angler"),
     OCEAN("ocean",
             Blocks.PRISMARINE_BRICKS, Blocks.PRISMARINE, Blocks.DARK_PRISMARINE, Blocks.DARK_PRISMARINE,
@@ -140,7 +137,7 @@ public enum Theme {
             Blocks.DEEPSLATE_BRICK_STAIRS, Blocks.DEEPSLATE_BRICK_SLAB, Blocks.DEEPSLATE_BRICK_WALL,
             Blocks.VERDANT_FROGLIGHT.defaultBlockState(),
             Blocks.GRAY_STAINED_GLASS_PANE, Blocks.SOUL_LANTERN, b("ender", "boss"),
-            List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.CREEPER, EntityType.SPIDER, EntityType.WITCH,
+            List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.WITCH,
                     EntityType.BREEZE, EntityType.WITHER_SKELETON),
             "silence", "howl"),
     CHERRY("cherry",
@@ -157,7 +154,7 @@ public enum Theme {
             Blocks.ACACIA_STAIRS, Blocks.ACACIA_SLAB, Blocks.ACACIA_FENCE,
             Blocks.OCHRE_FROGLIGHT.defaultBlockState(),
             Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.LANTERN, b("zombie", "skeleton"),
-            List.of(EntityType.ZOMBIE, EntityType.HUSK, EntityType.SKELETON, EntityType.SPIDER, EntityType.CREEPER,
+            List.of(EntityType.ZOMBIE, EntityType.HUSK, EntityType.SKELETON, EntityType.SPIDER,
                     EntityType.WITCH),
             "dune", "sheaf"),
     CRIMSON("crimson",
@@ -183,13 +180,9 @@ public enum Theme {
     public final BlockState wall, wallAlt, pillar, trim, floor, floorAlt, plinth, accent, light, glass,
             lanternHanging, lanternStanding;
     public final Block stairs, slab, wallPiece;
-    /** Entity type ids the boss Trial Spawner can pick from. */
     public final String[] bosses;
-    /** Entity types the per-floor monster spawners can pick from. */
     public final List<EntityType<?>> mobs;
-    /** Smithing-trim pattern id (also names the template item) and pottery sherd. */
     public final String trimPattern, sherd;
-    /** Nether-style themes search for ground inside the cavern layer instead of on the surface. */
     public final boolean nether;
 
     Theme(String id, Block wall, Block wallAlt, Block pillar, Block trim, Block floor, Block floorAlt,
@@ -219,17 +212,14 @@ public enum Theme {
         this.nether = id.equals("nether") || id.equals("piglin") || id.equals("crimson") || id.equals("warped");
     }
 
-    /** Boss pool helper: b("zombie") -> dimtowers:tower_zombie. */
     private static String[] b(String... names) {
         String[] out = new String[names.length];
         for (int i = 0; i < names.length; i++) out[i] = "dimtowers:tower_" + names[i];
         return out;
     }
 
-    /** Tag a boss carries so its minion waves and abilities know which tower it came from. */
     public String bossTag() { return "dt_theme_" + id; }
 
-    /** Mob list ordered weak to strong. Floor 0 uses the weak half, floors 1-2 nearly everything, floor 3 the strong half, floor 4 the top two. */
     public List<EntityType<?>> mobsForFloor(int k) {
         int n = mobs.size();
         int half = (n + 1) / 2;
@@ -242,7 +232,6 @@ public enum Theme {
         };
     }
 
-    /** Mobs a boss may summon in a wave: the tower's own list, minus things that make bad summons. */
     public List<EntityType<?>> waveMobs() {
         List<EntityType<?>> out = new ArrayList<>();
         for (EntityType<?> t : mobs) if (t != EntityType.SHULKER && t != EntityType.RAVAGER) out.add(t);

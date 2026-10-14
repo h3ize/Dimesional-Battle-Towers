@@ -36,28 +36,17 @@ import java.util.List;
 import java.util.Set;
 
 public class TowerPiece extends StructurePiece {
-    /** Distance between floors. */
     static final int H = 12;
-    /** Spawner floors below the boss arena. */
     static final int FLOORS = 5;
-    /** Outer half-width of the shell (tower is 35 wide, ~39 with buttresses). */
     static final int R = 17;
-    /** Half-width of the usable interior (shell is two blocks thick). */
     static final int I = R - 2;
-    /** Offset of the four interior pillars from the centre. */
     static final int PIL = 8;
-    /** Window / wall-bay centres along each face. */
     static final int[] WIN = {-12, -6, 0, 6, 12};
-    /** Interior and exterior pilaster positions along each face (between the windows). */
     static final int[] PILASTER = {-9, -3, 3, 9};
-    /** Prop spots on every floor (x, z): clear of the stairs, chests, pillars and vault alcove. */
     static final int[][] SPOTS = {{13, 4}, {13, -4}, {-13, 4}, {-13, -4}, {13, 7}, {13, -7}, {-13, 7}, {-13, -7}};
-    /** Every floor is a Trial Spawner room (clear it for a key). */
     static final int[] TRIAL_TOTAL = {6, 8, 10, 12, 6};
     static final int[] TRIAL_SIMUL = {2, 3, 4, 5, 3};
-    /** Cooldown after a trial spawner is beaten, in ticks (72000 = 1 hour). */
     static final int SPAWNER_COOLDOWN = 72000;
-    /** The boss spawner stays dormant for a long time after the boss dies (1200000 ticks = ~16 hours). */
     static final int BOSS_COOLDOWN = 1200000;
     static final String[] ARMOR_TIER = {"", "chainmail", "iron", "diamond", "netherite"};
     static final String[] TOOL_TIER = {"wooden", "stone", "iron", "diamond", "netherite"};
@@ -143,7 +132,6 @@ public class TowerPiece extends StructurePiece {
         BlockState at(int dx, int y, int dz) { return level.getBlockState(new BlockPos(cx + dx, y, cz + dz)); }
         boolean colInside(int dx, int dz) { return box.isInside(cx + dx, box.minY(), cz + dz); }
 
-        /** Face-relative set. face 0=south(+z) 1=north(-z) 2=east(+x) 3=west(-x); tt = along the wall, r = distance from centre. */
         void fs(int face, int tt, int r, int y, BlockState st) {
             switch (face) {
                 case 0 -> set(tt, y, r, st);
@@ -155,7 +143,6 @@ public class TowerPiece extends StructurePiece {
 
         BlockState wallBlock() { return rnd.nextInt(7) == 0 ? t.wallAlt : t.wall; }
 
-        /** Compass-rose floor with a diamond lattice and a trim border against the walls. */
         BlockState floorAt(int dx, int dz) {
             int r = Math.max(abs(dx), abs(dz));
             int man = abs(dx) + abs(dz);
@@ -179,7 +166,6 @@ public class TowerPiece extends StructurePiece {
             };
         }
 
-        /** Second carpet colour, used for rug borders and runner edges. */
         BlockState carpetAlt() {
             return switch (t) {
                 case NETHER, DEEP_DARK -> Blocks.GRAY_CARPET.defaultBlockState();
@@ -205,7 +191,6 @@ public class TowerPiece extends StructurePiece {
             if (ddx != 0) return ddx > 0 ? Direction.EAST : Direction.WEST;
             return ddz > 0 ? Direction.SOUTH : Direction.NORTH;
         }
-        /** Direction pointing from an outer cell toward the nearest wall face (used for corbels). */
         Direction towardWall(int dx, int dz) {
             return abs(dx) >= abs(dz) ? (dx > 0 ? Direction.WEST : Direction.EAST) : (dz > 0 ? Direction.NORTH : Direction.SOUTH);
         }
@@ -220,7 +205,6 @@ public class TowerPiece extends StructurePiece {
             }
             return key(pool.get(rnd.nextInt(pool.size())));
         }
-        /** Theme loot for the treasury floor, the four top-floor chests. */
         ResourceKey<LootTable> treasureKey() {
             return ResourceKey.create(Registries.LOOT_TABLE,
                     ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "chests/treasure_" + t.id));
@@ -236,14 +220,12 @@ public class TowerPiece extends StructurePiece {
             return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace(p));
         }
 
-        /** A single chest with the given loot table, facing the room. */
         void chestAt(BlockPos p, Direction f, ResourceKey<LootTable> lootKey) {
             if (p.getY() > yMax || !box.isInside(p)) return;
             level.setBlock(p, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, f), 2);
             RandomizableContainer.setBlockEntityLootTable(level, rnd, p, lootKey);
         }
 
-        /** Wall-centre chest shrine: pillars either side, a trim lintel and floor lanterns. */
         void chestShrine(int face, int b, ResourceKey<LootTable> lootKey) {
             for (int y = b + 1; y <= b + 3; y++) { fs(face, -1, I, y, t.pillar); fs(face, 1, I, y, t.pillar); }
             fs(face, 0, I, b + 3, t.trim);
@@ -252,7 +234,6 @@ public class TowerPiece extends StructurePiece {
             chestAt(pfs(face, 0, I, b + 1), inward(face), lootKey);
         }
 
-        /** Barrel in a wall nook, lid facing the room, filled from the early-game barrel loot table. */
         void barrelAt(int face, int tt, int y) {
             BlockPos p = pfs(face, tt, I, y);
             if (y > yMax || !box.isInside(p)) return;
@@ -269,7 +250,6 @@ public class TowerPiece extends StructurePiece {
             } catch (Exception ignored) { }
         }
 
-
         String weaponFor(EntityType<?> type, int k, boolean diamond) {
             String tool = (k == 3 && !diamond) ? "iron" : TOOL_TIER[k];
             if (type == EntityType.SKELETON || type == EntityType.STRAY || type == EntityType.BOGGED) return "bow";
@@ -282,10 +262,6 @@ public class TowerPiece extends StructurePiece {
             return null;
         }
 
-        /**
-         * Spawn-data entity for a floor mob. Gear, potion effects and (on the top floor) extra health scale with height.
-         * Because this is more than a bare {id:...}, the spawner will NOT call finalizeSpawn, so weapons are set here.
-         */
         String mobNbt(EntityType<?> type, int k, int diamondSlot) {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
             StringBuilder sb = new StringBuilder("{id:'" + id + "',Tags:['dt_floor']");
@@ -310,16 +286,10 @@ public class TowerPiece extends StructurePiece {
             return sb.append("}").toString();
         }
 
-        /** Spawn entry for a floor spawner. Diamond gear never appears on mobs (floor 3 is plain iron); it only drops from chests. */
         String floorPotentials(EntityType<?> type, int k) {
             return "{weight:1,data:{entity:" + mobNbt(type, k, -1) + "}}";
         }
 
-        /**
-         * Clearable floor: a Trial Spawner that spawns ONE mob type (picked per spawner from the floor's list).
-         * Kill the wave and it ejects a regular trial key, which opens this floor's vault. Counts, armour and effects
-         * scale with the floor number. The ominous config is identical so an omen can't swap in vanilla mobs.
-         */
         void trialFloorSpawner(int dx, int y, int dz, int k) {
             BlockPos p = new BlockPos(cx + dx, y, cz + dz);
             if (y > yMax || !box.isInside(p)) return;
@@ -331,10 +301,9 @@ public class TowerPiece extends StructurePiece {
                     + "spawn_potentials:[" + floorPotentials(type, k) + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
-                    + ",required_player_range:14,target_cooldown_length:" + SPAWNER_COOLDOWN + "}");
+                    + ",required_player_range:" + FloorMobs.FLOOR_RANGE + ",target_cooldown_length:" + SPAWNER_COOLDOWN + "}");
         }
 
-        /** Boss Trial Spawner: exactly one boss type for this tower (picked at generation), then it ejects the ominous trial key. */
         void bossTrialSpawner(int dx, int y, int dz) {
             BlockPos p = new BlockPos(cx + dx, y, cz + dz);
             if (y > yMax || !box.isInside(p)) return;
@@ -349,7 +318,6 @@ public class TowerPiece extends StructurePiece {
                     + ",required_player_range:12,target_cooldown_length:" + BOSS_COOLDOWN + "}");
         }
 
-
         BlockPos pfs(int face, int tt, int r, int y) {
             return switch (face) {
                 case 0 -> new BlockPos(cx + tt, y, cz + r);
@@ -358,12 +326,10 @@ public class TowerPiece extends StructurePiece {
                 default -> new BlockPos(cx - r, y, cz + tt);
             };
         }
-        /** Direction facing into the room from a given wall face. */
         Direction inward(int face) {
             return switch (face) { case 0 -> Direction.NORTH; case 1 -> Direction.SOUTH; case 2 -> Direction.WEST; default -> Direction.EAST; };
         }
 
-        /** Places a block (and optional block-entity NBT) only when it is inside this chunk's box. */
         void setBe(BlockPos p, BlockState st, String nbt) {
             if (p.getY() > yMax || !box.isInside(p)) return;
             level.setBlock(p, st, 2);
@@ -378,8 +344,6 @@ public class TowerPiece extends StructurePiece {
                     "{sherds:[" + sherds + "],item:{id:'" + contents + "',count:" + (2 + rnd.nextInt(5)) + "}}");
         }
 
-
-        /** Barrel standing on the floor, lid up, filled from the barrel loot table. */
         void propBarrel(int dx, int y, int dz) {
             BlockPos p = new BlockPos(cx + dx, y, cz + dz);
             if (y > yMax || !box.isInside(p)) return;
@@ -387,7 +351,6 @@ public class TowerPiece extends StructurePiece {
             RandomizableContainer.setBlockEntityLootTable(level, rnd, p, barrelKey());
         }
 
-        /** Floor 1 (k=0): armory. Candle tables alternating with supply barrels. */
         void armory(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
@@ -396,7 +359,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 2 (k=1): library. Reading nooks with lecterns, desks lit by candles, bookshelf stacks, chiseled shelves. */
         void library(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
@@ -419,7 +381,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 3 (k=2): candle hall. Lanterns and candlesticks alternating on trim-and-pillar pedestals. */
         void trophyHall(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
@@ -429,7 +390,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 4 (k=3): treasury. Decorated pots on gold plinths, with the theme's loot in the chests. */
         void treasury(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
@@ -443,7 +403,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Floor 5 (k=4): champion hall. Candle tables between lantern braziers. */
         void championHall(int b) {
             for (int i = 0; i < SPOTS.length; i++) {
                 int x = SPOTS[i][0], z = SPOTS[i][1];
@@ -458,7 +417,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Candle shelves on the interior pilasters, left out in front of the staircase. */
         void dress(int k, int b) {
             final int stairFace = k % 2 == 0 ? 1 : 0;
             final int stairTt = k % 2 == 0 ? -3 : 3;
@@ -471,10 +429,8 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Tower position along the wall of floor k's vault: always centred on its wall. */
         int vaultTt(int k) { return 0; }
 
-        /** Every floor's vault (opens with the key the floor's Trial Spawner ejects), framed like the boss vault. */
         void floorVault(int k, int b, int vf) {
             int vt = vaultTt(k);
             for (int y = b + 1; y <= b + 3; y++) { fs(vf, vt - 1, I, y, t.pillar); fs(vf, vt + 1, I, y, t.pillar); }
@@ -484,7 +440,6 @@ public class TowerPiece extends StructurePiece {
                     "{config:{key_item:{id:'minecraft:trial_key',count:1},loot_table:'dimtowers:vault/floor_" + t.id + "'}}");
         }
 
-        /** Interior pilasters between the windows on all four walls, from y0 up to y1. */
         void interiorPilasters(int y0, int y1) {
             for (int f = 0; f < 4; f++) for (int tt : PILASTER) {
                 fs(f, tt, I, y0, t.trim);
@@ -493,7 +448,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Corner brazier posts in the four inside corners. */
         void cornerPosts(int b) {
             for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
                 set(sx * I, b + 1, sz * I, t.trim);
@@ -502,7 +456,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** True if (dx, dz) lies in the footprint of floor k's staircase (nothing should be laid under it). */
         boolean underStairs(int k, int dx, int dz) {
             boolean even = k % 2 == 0;
             int zRow = even ? -(R - 3) : (R - 3), zIn = even ? -(R - 4) : (R - 4);
@@ -510,7 +463,6 @@ public class TowerPiece extends StructurePiece {
             return (dz == zRow || dz == zIn) && dx >= x0 && dx <= x1;
         }
 
-        /** Runners, a patterned ring round the dais and bordered rugs under each group of props. */
         void carpets(int b, int k) {
             BlockState main = carpet(), alt = carpetAlt();
             for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) {
@@ -542,11 +494,6 @@ public class TowerPiece extends StructurePiece {
                     : st.setValue(BlockStateProperties.NORTH, Boolean.TRUE).setValue(BlockStateProperties.SOUTH, Boolean.TRUE);
         }
 
-        /**
-         * Open, floating two-wide staircase running along the wall: bare stair blocks with nothing underneath, no
-         * balustrade and no stringer. The shaft above every step is fully cleared so nothing pokes into the floor above.
-         * Safe to call again after the rest of the tower is built.
-         */
         void stairs(int k) {
             int b = s(k);
             boolean even = k % 2 == 0;
@@ -571,7 +518,6 @@ public class TowerPiece extends StructurePiece {
             }
         }
 
-        /** Carpet at the foot of a floor's staircase. */
         void stairFoot(int k) {
             int b = s(k);
             boolean even = k % 2 == 0;

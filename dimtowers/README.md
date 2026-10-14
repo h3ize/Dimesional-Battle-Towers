@@ -80,8 +80,6 @@ Floor mobs scale with the floor: lower floors use the weaker half of the theme�
 - Guaranteed enchanted golden apple + netherite ingot
 - 3000 XP
 
-Named items carry the gold lore line: “Taken from a Dimensional Battle Tower.”
-
 **Floor vaults** (all five floors) — smaller per-theme table with a chance at the theme’s trim template.
 
 **Top-floor chests** — five per side wall; the middle three use the theme loot, the outer two (1st and 5th) randomly roll village blacksmith or end city loot.

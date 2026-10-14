@@ -17,6 +17,7 @@
   "filled_map.dimtowers.tower": "Dimensional Battle Tower Map",
   "message.dimtowers.wave": "%s has summoned minions!",
   "message.dimtowers.enrage": "%s is enraged!",
+  "message.dimtowers.desperate": "%s is making a last stand!",
   "advancement.dimtowers.explorer.title": "Tower Cartographer",
   "advancement.dimtowers.explorer.description": "Visit every kind of Dimensional Battle Tower.",
   "advancement.dimtowers.vault_master.title": "Master Key",

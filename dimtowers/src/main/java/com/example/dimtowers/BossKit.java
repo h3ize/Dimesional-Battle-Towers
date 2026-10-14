@@ -52,16 +52,11 @@ import java.util.ArrayList;
 import java.util.List;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
-/**
- * Shared boss logic: gear, phases, theme-aware minion waves and the per-boss signature moves.
- * Everything here uses vanilla projectiles, entities, blocks and particles only.
- */
 public final class BossKit {
     private BossKit() {}
 
     public enum Weapon { SWORD, BOW, AXE, TRIDENT, NONE }
 
-    /** One entry per signature attack. Each boss class picks one or two of these. */
     public enum Move {
         WITHER_SKULLS,
         ARROW_VOLLEY,
@@ -73,12 +68,29 @@ public final class BossKit {
         BLINK,
         DRAGON_BREATH,
         TRIDENT_FAN,
-        FANG_WAVE
+        FANG_WAVE,
+        FANG_RING,
+        FANG_STORM,
+        CURSE,
+        VEX_SWARM,
+        PULL,
+        RALLY,
+        WAR_CRY,
+        BACKSTEP,
+        WITHER_NOVA,
+        CHARGE,
+        ROAR,
+        FIRE_RAIN,
+        STORM_CALL,
+        SHIELD,
+        LIFE_DRAIN,
+        METEOR
     }
 
-    public static final double DMG_ZOMBIE = 18.0, DMG_SKELETON = 10.0, DMG_WITHER = 18.0, DMG_PIGLIN = 20.0,
-            DMG_VINDICATOR = 20.0, DMG_BLAZE = 14.0, DMG_ENDER = 22.0, DMG_SLIME = 18.0,
-            DMG_DROWNED = 20.0, DMG_GUARDIAN = 20.0, DMG_EVOKER = 16.0, DMG_RAVAGER = 24.0;
+    public static final double DMG_ZOMBIE = 20.0, DMG_SKELETON = 12.0, DMG_WITHER = 20.0, DMG_PIGLIN = 22.0,
+            DMG_VINDICATOR = 22.0, DMG_BLAZE = 16.0, DMG_ENDER = 24.0, DMG_SLIME = 20.0,
+            DMG_DROWNED = 22.0, DMG_GUARDIAN = 22.0, DMG_EVOKER = 18.0, DMG_RAVAGER = 26.0;
+    public static final double HEALTH = 750.0;
     public static final int XP = 3000;
 
     public static AttributeSupplier.Builder boost(AttributeSupplier.Builder b, double damage) {
@@ -86,7 +98,7 @@ public final class BossKit {
     }
 
     public static AttributeSupplier.Builder boost(AttributeSupplier.Builder b, double damage, double scale) {
-        return b.add(Attributes.MAX_HEALTH, 500.0)
+        return b.add(Attributes.MAX_HEALTH, HEALTH)
                 .add(Attributes.ATTACK_DAMAGE, damage)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
                 .add(Attributes.FOLLOW_RANGE, 64.0)
@@ -95,16 +107,11 @@ public final class BossKit {
                 .add(Attributes.SCALE, scale);
     }
 
-    /** Which tower this boss belongs to, read from the tag the boss spawner puts in its spawn data. */
     public static Theme theme(Entity e) {
         for (String s : e.getTags()) if (s.startsWith("dt_theme_")) return Theme.byName(s.substring(9));
         return Theme.OVERWORLD;
     }
 
-    /**
-     * Idempotent. Called from finalizeSpawn (eggs, /summon) AND from the first AI tick, because a Trial Spawner only
-     * calls finalizeSpawn when the spawn data is just {id:...}, and ours also carries the theme tag.
-     */
     public static void setup(Mob mob, Weapon weaponType, double damage) {
         if (mob.getTags().contains("dt_ready")) return;
         mob.addTag("dt_ready");
@@ -124,7 +131,7 @@ public final class BossKit {
                 }
                 case AXE -> {
                     weapon = new ItemStack(Items.NETHERITE_AXE);
-                    weapon.enchant(enchants.getOrThrow(Enchantments.SHARPNESS), 5);
+                    weapon.enchant(enchants.getOrThrow(Enchantments.SHARPNESS), 2);
                 }
                 case TRIDENT -> {
                     weapon = new ItemStack(Items.TRIDENT);
@@ -132,7 +139,7 @@ public final class BossKit {
                 }
                 default -> {
                     weapon = new ItemStack(Items.NETHERITE_SWORD);
-                    weapon.enchant(enchants.getOrThrow(Enchantments.SHARPNESS), 5);
+                    weapon.enchant(enchants.getOrThrow(Enchantments.SHARPNESS), 3);
                     weapon.enchant(enchants.getOrThrow(Enchantments.KNOCKBACK), 3);
                 }
             }
@@ -163,7 +170,6 @@ public final class BossKit {
         for (ServerPlayer p : sl.players()) if (p.distanceToSqr(boss) < 64.0 * 64.0) p.displayClientMessage(msg, true);
     }
 
-    /** Per-tick boss behaviour: gear upkeep, enrage at 50%, minion waves (from the tower's own mob list), lightning while enraged. */
     public static void tick(Mob mob) {
         if (!(mob.level() instanceof ServerLevel sl)) return;
         if (mob.tickCount % 20 == 0 && !mob.getTags().contains("dt_nogear")) {
@@ -171,9 +177,9 @@ public final class BossKit {
             if (h.isEmpty() || h.getDamageValue() > 0) mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
         }
         float frac = mob.getHealth() / mob.getMaxHealth();
-        if (frac <= 0.75f) wave(mob, sl, "dt_wave1", 2, 0);
-        if (frac <= 0.40f) wave(mob, sl, "dt_wave2", 3, 1);
-        if (frac <= 0.15f) wave(mob, sl, "dt_wave3", 4, 2);
+        if (frac <= 0.75f) wave(mob, sl, "dt_wave1", 4, 0);
+        if (frac <= 0.40f) wave(mob, sl, "dt_wave2", 5, 1);
+        if (frac <= 0.15f) wave(mob, sl, "dt_wave3", 6, 2);
         if (frac <= 0.5f && !mob.getTags().contains("dt_enraged")) {
             mob.addTag("dt_enraged");
             mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, MobEffectInstance.INFINITE_DURATION, 1, false, true));
@@ -181,7 +187,15 @@ public final class BossKit {
             sl.playSound(null, mob.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 2.0f, 1.0f);
             announce(sl, mob, "message.dimtowers.enrage");
         }
-        if (mob.getTags().contains("dt_enraged") && mob.tickCount % 140 == 0) {
+        if (frac <= 0.25f && !mob.getTags().contains("dt_desperate")) {
+            mob.addTag("dt_desperate");
+            mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, MobEffectInstance.INFINITE_DURATION, 2, false, true));
+            mob.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, MobEffectInstance.INFINITE_DURATION, 2, false, true));
+            sl.playSound(null, mob.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 2.0f, 0.8f);
+            announce(sl, mob, "message.dimtowers.desperate");
+        }
+        int strikeEvery = mob.getTags().contains("dt_desperate") ? 80 : 140;
+        if (mob.getTags().contains("dt_enraged") && mob.tickCount % strikeEvery == 0) {
             LivingEntity t = target(mob);
             if (t != null && t.isAlive()) {
                 LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(sl);
@@ -204,7 +218,6 @@ public final class BossKit {
         announce(sl, boss, "message.dimtowers.wave");
     }
 
-    /** Spawns one persistent, loot-less minion near the boss and points it at the boss's target. */
     @Nullable
     public static Mob spawnMinion(ServerLevel sl, Mob boss, EntityType<?> type, int boostLevel) {
         Entity e = type.create(sl);
@@ -233,13 +246,11 @@ public final class BossKit {
                 m -> m.getTags().contains("dt_minion") && m.isAlive()).size();
     }
 
-    /** True for any of this mod's boss entity types (minions are tagged dt_minion and never count as bosses). */
     private static boolean isTowerBoss(LivingEntity e) {
         return BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getNamespace().equals(DimensionalBattleTowers.MOD_ID)
                 && !e.getTags().contains("dt_minion");
     }
 
-    /** When a tower boss dies, everything it summoned vanishes with it. */
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity dead = event.getEntity();
         if (!(dead.level() instanceof ServerLevel sl) || !isTowerBoss(dead)) return;
@@ -253,7 +264,6 @@ public final class BossKit {
         for (Vex v : vexes) v.discard();
     }
 
-    /** Keeps a flying boss hovering a few blocks from the nearest player, circling slowly. */
     public static class HoverGoal extends Goal {
         private final Mob mob;
 
@@ -289,7 +299,6 @@ public final class BossKit {
 
     private interface Proj { @Nullable Entity make(Level level, Mob boss, Vec3 dir, int index); }
 
-    /** Signature moves. Attach with goalSelector.addGoal(2, new SignatureGoal(this, Move.X, Move.Y)). */
     public static class SignatureGoal extends Goal {
         private final Mob boss;
         private final Move[] moves;
@@ -297,6 +306,9 @@ public final class BossKit {
         private int windup = -1;
         private int windupIdx = -1;
         private int leapTicks = 0;
+        private int chargeTicks = 0;
+        private Vec3 chargeDir = Vec3.ZERO;
+        private final List<double[]> bolts = new ArrayList<>();
 
         public SignatureGoal(Mob boss, Move... moves) {
             this.boss = boss;
@@ -311,6 +323,7 @@ public final class BossKit {
         @Override
         public void stop() {
             windup = -1;
+            bolts.clear();
         }
 
         @Override
@@ -324,6 +337,29 @@ public final class BossKit {
                 leapTicks--;
                 if (leapTicks < 34 && boss.onGround()) { leapTicks = 0; slam(sl, 6.0, 12f); }
             }
+            for (int k = bolts.size() - 1; k >= 0; k--) {
+                double[] b = bolts.get(k);
+                b[3]--;
+                sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, b[0], b[1] + 0.2, b[2], 6, 0.6, 0.1, 0.6, 0.02);
+                if (b[3] <= 0) {
+                    LightningBolt strike = EntityType.LIGHTNING_BOLT.create(sl);
+                    if (strike != null) {
+                        strike.moveTo(b[0], b[1], b[2]);
+                        sl.addFreshEntity(strike);
+                    }
+                    bolts.remove(k);
+                }
+            }
+            if (chargeTicks > 0) {
+                chargeTicks--;
+                boss.setDeltaMovement(chargeDir.x, boss.getDeltaMovement().y, chargeDir.z);
+                for (LivingEntity v : sl.getEntitiesOfClass(LivingEntity.class, boss.getBoundingBox().inflate(1.0),
+                        x -> x != boss && x.isAlive() && !(x instanceof Enemy))) {
+                    v.hurt(sl.damageSources().mobAttack(boss), 10f);
+                    v.setDeltaMovement(v.getDeltaMovement().add(chargeDir.x * 0.9, 0.5, chargeDir.z * 0.9));
+                    v.hurtMarked = true;
+                }
+            }
             if (windup > 0) {
                 windup--;
                 if (windup % 4 == 0) {
@@ -332,7 +368,10 @@ public final class BossKit {
                 if (windup == 0) { windup = -1; execute(windupIdx, sl, t, enraged); }
                 return;
             }
-            for (int i = 0; i < cd.length; i++) if (cd[i] > 0) cd[i]--;
+            for (int i = 0; i < cd.length; i++) {
+                if (cd[i] > 0) cd[i]--;
+                if (cd[i] > 0 && boss.tickCount % 4 == 0) cd[i]--;
+            }
             for (int i = 0; i < moves.length; i++) if (cd[i] <= 0 && start(i, sl, t, enraged)) break;
         }
 
@@ -368,6 +407,154 @@ public final class BossKit {
                     sound(sl, SoundEvents.HOGLIN_ANGRY, 2.0f, 0.7f);
                     sl.sendParticles(ParticleTypes.ANGRY_VILLAGER, boss.getX(), boss.getY(1.0), boss.getZ(), 15, 1, 1, 1, 0.0);
                     cd[i] = enraged ? 260 : 400;
+                    return true;
+                }
+                case STORM_CALL -> {
+                    if (d2 > 900) return false;
+                    RandomSource r = boss.getRandom();
+                    int n = enraged ? 6 : 4;
+                    for (int j = 0; j < n; j++) {
+                        double ox = j == 0 ? 0.0 : (r.nextDouble() - 0.5) * 10.0;
+                        double oz = j == 0 ? 0.0 : (r.nextDouble() - 0.5) * 10.0;
+                        bolts.add(new double[]{t.getX() + ox, t.getY(), t.getZ() + oz, 30 + j * 4});
+                    }
+                    sound(sl, SoundEvents.LIGHTNING_BOLT_THUNDER, 2.0f, 0.8f);
+                    cd[i] = enraged ? 160 : 260;
+                    return true;
+                }
+                case SHIELD -> {
+                    if (boss.hasEffect(MobEffects.DAMAGE_RESISTANCE)) return false;
+                    begin(i, 10, enraged ? 400 : 520);
+                    sound(sl, SoundEvents.BEACON_ACTIVATE, 2.0f, 0.8f);
+                    return true;
+                }
+                case LIFE_DRAIN -> {
+                    if (d2 > 100) return false;
+                    begin(i, 20, enraged ? 200 : 300);
+                    sound(sl, SoundEvents.WARDEN_SONIC_CHARGE, 2.0f, 1.0f);
+                    return true;
+                }
+                case METEOR -> {
+                    if (d2 > 900) return false;
+                    RandomSource r = boss.getRandom();
+                    int n = enraged ? 6 : 4;
+                    for (int j = 0; j < n; j++) {
+                        LargeFireball lf = new LargeFireball(sl, boss, new Vec3(0, -1, 0), 1);
+                        lf.setPos(t.getX() + (r.nextDouble() - 0.5) * 12, t.getY() + 16, t.getZ() + (r.nextDouble() - 0.5) * 12);
+                        sl.addFreshEntity(lf);
+                    }
+                    sound(sl, SoundEvents.GHAST_SHOOT, 2.0f, 0.5f);
+                    cd[i] = enraged ? 170 : 280;
+                    return true;
+                }
+                case PULL -> {
+                    if (d2 > 400 || d2 < 36) return false;
+                    begin(i, 15, enraged ? 180 : 280);
+                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_1, 2.0f, 0.6f);
+                    return true;
+                }
+                case RALLY -> {
+                    if (countMinions(sl, boss) >= 8) { cd[i] = 100; return false; }
+                    List<EntityType<?>> pool = theme(boss).waveMobs();
+                    int n = enraged ? 4 : 3;
+                    for (int j = 0; j < n; j++) spawnMinion(sl, boss, pool.get(boss.getRandom().nextInt(pool.size())), enraged ? 1 : 0);
+                    sl.sendParticles(ParticleTypes.ANGRY_VILLAGER, boss.getX(), boss.getY(1.0), boss.getZ(), 20, 1, 1, 1, 0.0);
+                    sound(sl, SoundEvents.EVOKER_PREPARE_SUMMON, 2.0f, 0.7f);
+                    cd[i] = enraged ? 300 : 450;
+                    return true;
+                }
+                case WAR_CRY -> {
+                    if (countMinions(sl, boss) == 0) { cd[i] = 60; return false; }
+                    begin(i, 15, enraged ? 260 : 380);
+                    sound(sl, SoundEvents.RAVAGER_ROAR, 2.0f, 0.8f);
+                    return true;
+                }
+                case BACKSTEP -> {
+                    if (d2 > 36 || !boss.onGround()) return false;
+                    Vec3 away = new Vec3(boss.getX() - t.getX(), 0, boss.getZ() - t.getZ());
+                    if (away.lengthSqr() < 1.0E-4) away = new Vec3(1, 0, 0);
+                    away = away.normalize();
+                    boss.setDeltaMovement(away.x * 1.1, 0.5, away.z * 1.1);
+                    sound(sl, SoundEvents.SKELETON_AMBIENT, 2.0f, 0.6f);
+                    cd[i] = enraged ? 80 : 130;
+                    return true;
+                }
+                case WITHER_NOVA -> {
+                    if (d2 > 900) return false;
+                    begin(i, 20, enraged ? 120 : 200);
+                    sound(sl, SoundEvents.WITHER_AMBIENT, 2.0f, 0.7f);
+                    return true;
+                }
+                case CHARGE -> {
+                    if (d2 < 36 || d2 > 400 || !boss.onGround() || !boss.hasLineOfSight(t)) return false;
+                    begin(i, 16, enraged ? 110 : 170);
+                    sound(sl, SoundEvents.RAVAGER_ROAR, 1.5f, 0.8f);
+                    return true;
+                }
+                case ROAR -> {
+                    if (d2 > 196) return false;
+                    begin(i, 20, enraged ? 160 : 240);
+                    sound(sl, SoundEvents.RAVAGER_ROAR, 2.0f, 0.5f);
+                    return true;
+                }
+                case FIRE_RAIN -> {
+                    if (d2 > 900) return false;
+                    RandomSource r = boss.getRandom();
+                    int n = enraged ? 14 : 8;
+                    for (int j = 0; j < n; j++) {
+                        SmallFireball f = new SmallFireball(sl, boss, new Vec3(0, -1, 0));
+                        f.setPos(t.getX() + (r.nextDouble() - 0.5) * 9, t.getY() + 14, t.getZ() + (r.nextDouble() - 0.5) * 9);
+                        sl.addFreshEntity(f);
+                    }
+                    sound(sl, SoundEvents.BLAZE_SHOOT, 2.0f, 0.4f);
+                    cd[i] = enraged ? 120 : 200;
+                    return true;
+                }
+                case FANG_RING -> {
+                    if (d2 > 100) return false;
+                    begin(i, 15, enraged ? 100 : 170);
+                    sound(sl, SoundEvents.EVOKER_PREPARE_ATTACK, 2.0f, 0.6f);
+                    return true;
+                }
+                case FANG_STORM -> {
+                    if (d2 > 900) return false;
+                    RandomSource r = boss.getRandom();
+                    int n = enraged ? 22 : 14;
+                    for (int j = 0; j < n; j++) {
+                        double fx = t.getX() + (r.nextDouble() - 0.5) * 12.0;
+                        double fz = t.getZ() + (r.nextDouble() - 0.5) * 12.0;
+                        sl.addFreshEntity(new EvokerFangs(sl, fx, t.getY(), fz, r.nextFloat() * 6.2831f, r.nextInt(40), boss));
+                    }
+                    sound(sl, SoundEvents.EVOKER_CAST_SPELL, 2.0f, 0.7f);
+                    cd[i] = enraged ? 150 : 230;
+                    return true;
+                }
+                case CURSE -> {
+                    if (d2 > 625 || !boss.hasLineOfSight(t)) return false;
+                    begin(i, 25, enraged ? 220 : 340);
+                    sound(sl, SoundEvents.EVOKER_PREPARE_WOLOLO, 2.0f, 0.7f);
+                    return true;
+                }
+                case VEX_SWARM -> {
+                    List<Vex> owned = sl.getEntitiesOfClass(Vex.class, boss.getBoundingBox().inflate(40), v -> v.getOwner() == boss && v.isAlive());
+                    if (owned.size() >= 8) { cd[i] = 100; return false; }
+                    RandomSource r = boss.getRandom();
+                    int n = enraged ? 4 : 2;
+                    for (int j = 0; j < n; j++) {
+                        Vex v = EntityType.VEX.create(sl);
+                        if (v == null) continue;
+                        v.moveTo(boss.getX() + (r.nextDouble() - 0.5) * 4, boss.getY() + 1.5, boss.getZ() + (r.nextDouble() - 0.5) * 4, 0f, 0f);
+                        v.finalizeSpawn(sl, sl.getCurrentDifficultyAt(v.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
+                        v.setOwner(boss);
+                        v.setBoundOrigin(boss.blockPosition());
+                        v.setLimitedLife(20 * (20 + r.nextInt(20)));
+                        v.addTag("dt_minion");
+                        for (EquipmentSlot slot : EquipmentSlot.values()) v.setDropChance(slot, 0f);
+                        sl.addFreshEntityWithPassengers(v);
+                    }
+                    sl.sendParticles(ParticleTypes.WITCH, boss.getX(), boss.getY(1.0), boss.getZ(), 30, 1.0, 1.0, 1.0, 0.1);
+                    sound(sl, SoundEvents.EVOKER_PREPARE_SUMMON, 2.0f, 0.8f);
+                    cd[i] = enraged ? 200 : 320;
                     return true;
                 }
                 case BLINK -> {
@@ -475,7 +662,110 @@ public final class BossKit {
 
         private void execute(int idx, ServerLevel sl, LivingEntity t, boolean enraged) {
             switch (moves[idx]) {
-                case GROUND_SLAM -> slam(sl, enraged ? 11.0 : 8.0, enraged ? 18f : 12f);
+                case GROUND_SLAM -> slam(sl, enraged ? 11.0 : 8.0, enraged ? 20f : 14f);
+                case SHIELD -> {
+                    boss.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, enraged ? 120 : 100, 2, false, true));
+                    sl.sendParticles(ParticleTypes.END_ROD, boss.getX(), boss.getY(1.0), boss.getZ(), 40, 1.0, 1.2, 1.0, 0.05);
+                    sound(sl, SoundEvents.ENCHANTMENT_TABLE_USE, 2.0f, 0.6f);
+                }
+                case LIFE_DRAIN -> {
+                    List<Player> victims = sl.getEntitiesOfClass(Player.class, boss.getBoundingBox().inflate(10.0),
+                            x -> x.isAlive() && !x.isCreative() && !x.isSpectator());
+                    for (Player p : victims) {
+                        if (p.hurt(sl.damageSources().mobAttack(boss), enraged ? 10f : 7f)) {
+                            boss.heal((float) (boss.getMaxHealth() * 0.015));
+                            sl.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY(1.0), p.getZ(), 20, 0.4, 0.7, 0.4, 0.08);
+                            sl.sendParticles(ParticleTypes.HEART, boss.getX(), boss.getY(1.5), boss.getZ(), 3, 0.5, 0.5, 0.5, 0.0);
+                        }
+                    }
+                    sound(sl, SoundEvents.WARDEN_SONIC_BOOM, 1.5f, 1.2f);
+                }
+                case PULL -> {
+                    List<LivingEntity> list = sl.getEntitiesOfClass(LivingEntity.class, boss.getBoundingBox().inflate(20.0, 4.0, 20.0),
+                            x -> x != boss && x.isAlive() && !(x instanceof Enemy));
+                    for (LivingEntity e : list) {
+                        Vec3 to = boss.position().subtract(e.position()).multiply(1, 0, 1);
+                        if (to.lengthSqr() < 1.0E-4) continue;
+                        to = to.normalize();
+                        e.setDeltaMovement(e.getDeltaMovement().add(to.x * 1.5, 0.3, to.z * 1.5));
+                        e.hurtMarked = true;
+                        e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0));
+                        sl.sendParticles(ParticleTypes.CRIT, e.getX(), e.getY(1.0), e.getZ(), 15, 0.4, 0.6, 0.4, 0.1);
+                    }
+                    sound(sl, SoundEvents.TRIDENT_RIPTIDE_3, 2.0f, 0.7f);
+                }
+                case WAR_CRY -> {
+                    int lvl = enraged ? 1 : 0;
+                    List<Mob> allies = sl.getEntitiesOfClass(Mob.class, boss.getBoundingBox().inflate(40),
+                            x -> x.isAlive() && (x == boss || x.getTags().contains("dt_minion")));
+                    for (Mob m : allies) {
+                        m.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, lvl));
+                        m.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, lvl));
+                        sl.sendParticles(ParticleTypes.ANGRY_VILLAGER, m.getX(), m.getY(1.0), m.getZ(), 8, 0.4, 0.6, 0.4, 0.0);
+                    }
+                    sound(sl, SoundEvents.RAVAGER_ROAR, 2.0f, 0.9f);
+                }
+                case WITHER_NOVA -> {
+                    int n = enraged ? 16 : 10;
+                    for (int j = 0; j < n; j++) {
+                        double a = j * Math.PI * 2.0 / n;
+                        WitherSkull ws = new WitherSkull(sl, boss, new Vec3(Math.cos(a), -0.05, Math.sin(a)));
+                        ws.setPos(boss.getX() + Math.cos(a) * 1.5, boss.getY(0.6), boss.getZ() + Math.sin(a) * 1.5);
+                        sl.addFreshEntity(ws);
+                    }
+                    sound(sl, SoundEvents.WITHER_SHOOT, 2.0f, 0.6f);
+                }
+                case CHARGE -> {
+                    Vec3 d = new Vec3(t.getX() - boss.getX(), 0, t.getZ() - boss.getZ());
+                    double len = d.length();
+                    if (len < 1.0E-3) return;
+                    chargeDir = d.scale((enraged ? 1.0 : 0.85) / len);
+                    chargeTicks = 14;
+                }
+                case ROAR -> {
+                    double rad = enraged ? 14.0 : 11.0;
+                    List<LivingEntity> list = sl.getEntitiesOfClass(LivingEntity.class, boss.getBoundingBox().inflate(rad, 3.0, rad),
+                            x -> x != boss && x.isAlive() && !(x instanceof Enemy));
+                    for (LivingEntity e : list) {
+                        if (e.distanceToSqr(boss) > rad * rad) continue;
+                        e.hurt(sl.damageSources().mobAttack(boss), 8f);
+                        Vec3 away = e.position().subtract(boss.position()).multiply(1, 0, 1);
+                        if (away.lengthSqr() < 1.0E-4) away = new Vec3(1, 0, 0);
+                        away = away.normalize();
+                        e.setDeltaMovement(e.getDeltaMovement().add(away.x * 1.6, 0.5, away.z * 1.6));
+                        e.hurtMarked = true;
+                        e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, enraged ? 120 : 80, 1));
+                    }
+                    for (int k = 0; k < 24; k++) {
+                        double a = k * Math.PI / 12.0;
+                        sl.sendParticles(ParticleTypes.POOF, boss.getX() + Math.cos(a) * rad * 0.6, boss.getY() + 0.5, boss.getZ() + Math.sin(a) * rad * 0.6, 2, 0.2, 0.2, 0.2, 0.02);
+                    }
+                    sound(sl, SoundEvents.RAVAGER_STUNNED, 2.0f, 0.5f);
+                }
+                case FANG_RING -> {
+                    double[] radii = {2.5, 5.0, 7.5, 10.0};
+                    int[] counts = {8, 12, 16, 20};
+                    int rings = enraged ? 4 : 3;
+                    for (int k = 0; k < rings; k++) {
+                        for (int j = 0; j < counts[k]; j++) {
+                            double a = j * Math.PI * 2.0 / counts[k];
+                            sl.addFreshEntity(new EvokerFangs(sl, boss.getX() + Math.cos(a) * radii[k], boss.getY(),
+                                    boss.getZ() + Math.sin(a) * radii[k], (float) a, k * 6, boss));
+                        }
+                    }
+                    sound(sl, SoundEvents.EVOKER_CAST_SPELL, 2.0f, 0.6f);
+                }
+                case CURSE -> {
+                    List<Player> victims = sl.getEntitiesOfClass(Player.class, boss.getBoundingBox().inflate(24.0),
+                            p -> p.isAlive() && !p.isCreative() && !p.isSpectator());
+                    for (Player p : victims) {
+                        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, enraged ? 160 : 100, 1));
+                        p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, enraged ? 300 : 200, 1));
+                        p.addEffect(new MobEffectInstance(MobEffects.DARKNESS, enraged ? 140 : 80, 0));
+                        sl.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY(1.0), p.getZ(), 25, 0.5, 0.8, 0.5, 0.05);
+                    }
+                    sound(sl, SoundEvents.EVOKER_CAST_SPELL, 2.0f, 0.5f);
+                }
                 case LEAP -> {
                     Vec3 d = new Vec3(t.getX() - boss.getX(), 0, t.getZ() - boss.getZ());
                     double len = d.length();
@@ -489,7 +779,6 @@ public final class BossKit {
             }
         }
 
-        /** Shockwave: damages and launches everything that is not a monster within the radius. */
         private void slam(ServerLevel sl, double radius, float dmg) {
             Vec3 c = boss.position();
             List<LivingEntity> list = sl.getEntitiesOfClass(LivingEntity.class,

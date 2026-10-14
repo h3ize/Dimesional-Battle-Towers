@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '1.0.21'
 }
-version = '2.0'
+version = '2.5'
 group = 'com.example.dimtowers'
 base { archivesName = 'dimensional-battle-towers' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)

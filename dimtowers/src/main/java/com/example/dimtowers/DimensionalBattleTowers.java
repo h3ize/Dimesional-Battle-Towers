@@ -104,6 +104,7 @@ public class DimensionalBattleTowers {
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);
+        NeoForge.EVENT_BUS.addListener(FloorMobs::onLevelTick);
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);
         NeoForge.EVENT_BUS.addListener(OminousKey::onUse);
         NeoForge.EVENT_BUS.addListener(OminousKey::onServerTick);

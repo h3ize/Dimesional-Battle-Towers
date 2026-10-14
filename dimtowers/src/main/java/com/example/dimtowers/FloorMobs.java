@@ -1,6 +1,21 @@
 package com.example.dimtowers;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.trialspawner.TrialSpawnerState;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.server.level.ServerLevel;
@@ -21,11 +36,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
-/**
- * Floor Trial Spawner mobs (tagged dt_floor) must always hunt players. Vanilla neutral mobs (zombified piglins,
- * endermen, spiders in light) and brain-driven mobs (piglins, hoglins) never pick a target on their own, and
- * spawner-spawned mobs skip finalizeSpawn, so we hand every floor mob the nearest survival player as its target.
- */
 public final class FloorMobs {
     private static final double RANGE = 40.0;
 
@@ -61,20 +71,61 @@ public final class FloorMobs {
         }
     }
 
-    /** Floor trial spawners cool down for 1 hour (72000 ticks). */
     public static final int FLOOR_COOLDOWN = 72000;
 
-    /**
-     * Ticks between spawns on floor trial spawners (vanilla default 40, was 30). The spawner tops itself back up to its
-     * simultaneous-mob cap one mob per interval, so a tiny interval refills every killed mob almost instantly and
-     * two or more missing mobs come back together.
-     */
+    public static final int FLOOR_RANGE = 22;
+
+    private static final double FLOOR_VERTICAL = 5.0;
+
+    private static final Map<ResourceKey<Level>, Set<BlockPos>> FLOOR_SPAWNERS = new ConcurrentHashMap<>();
+
+    public static void onLevelTick(LevelTickEvent.Post e) {
+        if (!(e.getLevel() instanceof ServerLevel level)) return;
+        long now = level.getGameTime();
+        if (now % 5 != 0) return;
+        Set<BlockPos> spawners = FLOOR_SPAWNERS.get(level.dimension());
+        if (spawners == null || spawners.isEmpty()) return;
+        java.util.List<ServerPlayer> players = new java.util.ArrayList<>();
+        for (ServerPlayer p : level.players()) if (p.isAlive() && !p.isCreative() && !p.isSpectator()) players.add(p);
+        if (players.isEmpty()) return;
+        for (BlockPos pos : spawners) {
+            if (!level.isLoaded(pos)) continue;
+            java.util.List<ServerPlayer> near = new java.util.ArrayList<>();
+            for (ServerPlayer p : players) {
+                double dx = p.getX() - (pos.getX() + 0.5), dz = p.getZ() - (pos.getZ() + 0.5);
+                if (dx * dx + dz * dz <= (double) FLOOR_RANGE * FLOOR_RANGE && Math.abs(p.getY() - pos.getY()) <= FLOOR_VERTICAL) near.add(p);
+            }
+            if (near.isEmpty()) continue;
+            BlockState state = level.getBlockState(pos);
+            if (!state.is(Blocks.TRIAL_SPAWNER)) {
+                spawners.remove(pos);
+                continue;
+            }
+            BlockEntity be = level.getBlockEntity(pos);
+            if (!(be instanceof TrialSpawnerBlockEntity)) continue;
+            TrialSpawnerState st = state.getValue(BlockStateProperties.TRIAL_SPAWNER_STATE);
+            if (st != TrialSpawnerState.WAITING_FOR_PLAYERS && st != TrialSpawnerState.ACTIVE) continue;
+            try {
+                CompoundTag tag = be.saveWithoutMetadata(level.registryAccess());
+                boolean changed = false;
+                if (st == TrialSpawnerState.WAITING_FOR_PLAYERS) {
+                    ListTag reg = new ListTag();
+                    for (ServerPlayer p : near) reg.add(NbtUtils.createUUID(p.getUUID()));
+                    tag.put("registered_players", reg);
+                    changed = true;
+                } else if (tag.getInt("total_mobs_spawned") == 0 && tag.getLong("next_mob_spawns_at") > now) {
+                    tag.putLong("next_mob_spawns_at", now);
+                    changed = true;
+                }
+                if (!changed) continue;
+                be.loadWithComponents(tag, level.registryAccess());
+                be.setChanged();
+            } catch (Exception ignored) { }
+        }
+    }
+
     public static final int FLOOR_SPAWN_TICKS = 2;
 
-    /**
-     * Towers generated before the cooldown change keep the old value baked into their spawner block entities, so fix
-     * floor spawners (recognised by the dt_floor tag in their spawn data) whenever their chunk loads.
-     */
     public static void onChunkLoad(ChunkEvent.Load e) {
         if (!(e.getLevel() instanceof ServerLevel level)) return;
         if (!(e.getChunk() instanceof LevelChunk chunk)) return;
@@ -84,14 +135,27 @@ public final class FloorMobs {
                     if (!(be instanceof TrialSpawnerBlockEntity)) continue;
                     CompoundTag tag = be.saveWithoutMetadata(level.registryAccess());
                     if (!tag.toString().contains("dt_floor")) continue;
+                    FLOOR_SPAWNERS.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet()).add(be.getBlockPos().immutable());
                     boolean changed = false;
                     if (tag.getInt("target_cooldown_length") != FLOOR_COOLDOWN) {
                         tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
                         changed = true;
                     }
+                    if (tag.getInt("required_player_range") != FLOOR_RANGE) {
+                        tag.putInt("required_player_range", FLOOR_RANGE);
+                        changed = true;
+                    }
                     for (String key : new String[]{"normal_config", "ominous_config"}) {
                         if (!tag.contains(key, Tag.TAG_COMPOUND)) continue;
                         CompoundTag cfg = tag.getCompound(key);
+                        ListTag pots = cfg.getList("spawn_potentials", Tag.TAG_COMPOUND);
+                        for (int j = 0; j < pots.size(); j++) {
+                            CompoundTag entity = pots.getCompound(j).getCompound("data").getCompound("entity");
+                            if (entity.getString("id").equals("minecraft:creeper")) {
+                                entity.putString("id", "minecraft:zombie");
+                                changed = true;
+                            }
+                        }
                         if (cfg.getInt("ticks_between_spawn") != FLOOR_SPAWN_TICKS) {
                             cfg.putInt("ticks_between_spawn", FLOOR_SPAWN_TICKS);
                             changed = true;
