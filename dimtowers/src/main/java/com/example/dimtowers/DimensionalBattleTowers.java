@@ -21,6 +21,7 @@ import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.minecraft.world.level.saveddata.maps.MapDecorationType;
@@ -49,6 +50,11 @@ public class DimensionalBattleTowers {
             DeferredRegister.create(Registries.STRUCTURE_TYPE, MOD_ID);
     public static final DeferredHolder<StructureType<?>, StructureType<TowerStructure>> TOWER_STRUCTURE =
             STRUCTURE_TYPES.register("tower", () -> (StructureType<TowerStructure>) () -> TowerStructure.CODEC);
+
+    public static final DeferredRegister<LootItemFunctionType<?>> LOOT_FUNCTIONS =
+            DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, MOD_ID);
+    public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<MaxEnchantFunction>> MAX_ENCHANT =
+            LOOT_FUNCTIONS.register("max_enchant", () -> new LootItemFunctionType<>(MaxEnchantFunction.CODEC));
 
     public static final DeferredRegister<StructurePieceType> PIECE_TYPES =
             DeferredRegister.create(Registries.STRUCTURE_PIECE, MOD_ID);
@@ -96,6 +102,7 @@ public class DimensionalBattleTowers {
     public DimensionalBattleTowers(IEventBus modBus) {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
+        LOOT_FUNCTIONS.register(modBus);
         ENTITIES.register(modBus);
         OminousKey.ITEMS.register(modBus);
         modBus.addListener(this::attributes);

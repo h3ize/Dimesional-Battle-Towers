@@ -518,6 +518,101 @@
           ]
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.01
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_sword",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_lore",
+              "lore": [
+                {
+                  "text": "Taken from a Boss Tower.",
+                  "italic": true,
+                  "color": "yellow"
+                }
+              ],
+              "mode": "replace_all"
+            },
+            {
+              "function": "dimtowers:max_enchant"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_pickaxe",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_lore",
+              "lore": [
+                {
+                  "text": "Taken from a Boss Tower.",
+                  "italic": true,
+                  "color": "yellow"
+                }
+              ],
+              "mode": "replace_all"
+            },
+            {
+              "function": "dimtowers:max_enchant"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_axe",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_lore",
+              "lore": [
+                {
+                  "text": "Taken from a Boss Tower.",
+                  "italic": true,
+                  "color": "yellow"
+                }
+              ],
+              "mode": "replace_all"
+            },
+            {
+              "function": "dimtowers:max_enchant"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_shovel",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_lore",
+              "lore": [
+                {
+                  "text": "Taken from a Boss Tower.",
+                  "italic": true,
+                  "color": "yellow"
+                }
+              ],
+              "mode": "replace_all"
+            },
+            {
+              "function": "dimtowers:max_enchant"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

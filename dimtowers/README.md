@@ -72,6 +72,7 @@ Floor mobs scale with the floor: lower floors use the weaker half of the theme�
 - 2–3 guaranteed trim templates
 - Guaranteed named weapon and named chestplate for that theme
 - 40% chance of an extra enchanted netherite piece
+- 1% chance of a random netherite sword, pickaxe, axe or shovel enchanted to the maximum level of every compatible enchantment on the server (curses and silk touch excluded)
 
 **Boss drops**
 - 6–9 rolls with larger stacks

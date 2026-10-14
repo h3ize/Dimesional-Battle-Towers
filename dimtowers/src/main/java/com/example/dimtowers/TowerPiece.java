@@ -93,13 +93,11 @@ public class TowerPiece extends StructurePiece {
             "chests/village/village_weaponsmith", "chests/village/village_armorer", "chests/village/village_toolsmith",
             "chests/woodland_mansion", "chests/pillager_outpost", "chests/igloo_chest", "chests/shipwreck_treasure",
             "chests/underwater_ruin_big", "chests/buried_treasure", "chests/trial_chambers/reward");
-    private static final List<String> OVERWORLD_LOOT = List.of("chests/ancient_city", "chests/ancient_city");
-    private static final List<String> NETHER_LOOT = List.of("chests/bastion_treasure", "chests/bastion_other",
-            "chests/bastion_bridge", "chests/bastion_hoglin_stable", "chests/nether_bridge", "chests/ruined_portal");
+    private static final List<String> OVERWORLD_LOOT = List.of("chests/woodland_mansion");
+    private static final List<String> NETHER_LOOT = List.of("chests/nether_bridge", "chests/ruined_portal");
     private static final List<String> ILLAGER_LOOT = List.of("chests/pillager_outpost", "chests/pillager_outpost",
             "chests/woodland_mansion", "chests/village/village_weaponsmith", "chests/village/village_armorer");
-    private static final List<String> END_LOOT = List.of("chests/ancient_city", "chests/woodland_mansion",
-            "chests/bastion_treasure", "chests/stronghold_library");
+    private static final List<String> END_LOOT = List.of("chests/woodland_mansion", "chests/stronghold_library");
 
     private final class Builder {
         final WorldGenLevel level;

@@ -61,10 +61,9 @@
             {
               "function": "minecraft:set_enchantments",
               "enchantments": {
-                "minecraft:sharpness": 6,
-                "minecraft:efficiency": 5,
-                "minecraft:unbreaking": 4,
-                "minecraft:mending": 1
+                "minecraft:sharpness": 4,
+                "minecraft:efficiency": 4,
+                "minecraft:unbreaking": 3
               }
             }
           ]
@@ -96,10 +95,9 @@
             {
               "function": "minecraft:set_enchantments",
               "enchantments": {
-                "minecraft:protection": 5,
-                "minecraft:thorns": 3,
-                "minecraft:unbreaking": 4,
-                "minecraft:mending": 1
+                "minecraft:protection": 3,
+                "minecraft:thorns": 1,
+                "minecraft:unbreaking": 3
               }
             }
           ]
