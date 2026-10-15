@@ -108,6 +108,7 @@ public class DimensionalBattleTowers {
         modBus.addListener(this::attributes);
         modBus.addListener(this::creativeTabs);
         NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(BossKit::onLivingDrops);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);

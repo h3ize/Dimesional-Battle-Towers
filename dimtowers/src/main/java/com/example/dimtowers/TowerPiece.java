@@ -299,6 +299,7 @@ public class TowerPiece extends StructurePiece {
                     + "spawn_potentials:[" + floorPotentials(type, k) + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
+                    + ",spawn_data:{entity:" + mobNbt(type, k, -1) + "}"
                     + ",required_player_range:" + FloorMobs.FLOOR_RANGE + ",target_cooldown_length:" + SPAWNER_COOLDOWN + "}");
         }
 
@@ -307,12 +308,15 @@ public class TowerPiece extends StructurePiece {
             if (y > yMax || !box.isInside(p)) return;
             level.setBlock(p, Blocks.TRIAL_SPAWNER.defaultBlockState(), 2);
             String id = t.bosses[rnd.nextInt(t.bosses.length)];
-            String pot = "{weight:1,data:{entity:{id:'" + id + "',Tags:['" + t.bossTag() + "']}}}";
+            String arena = "dt_arena_" + p.getX() + "_" + p.getY() + "_" + p.getZ();
+            String ent = "{id:'" + id + "',Tags:['" + t.bossTag() + "','" + arena + "']}";
+            String pot = "{weight:1,data:{entity:" + ent + "}}";
             String config = "{spawn_range:5,total_mobs:1.0f,simultaneous_mobs:1.0f,"
                     + "total_mobs_added_per_player:0.0f,simultaneous_mobs_added_per_player:0.0f,ticks_between_spawn:40,"
                     + "spawn_potentials:[" + pot + "],"
                     + "loot_tables_to_eject:[{weight:1,data:'dimtowers:spawners/boss_key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
+                    + ",spawn_data:{entity:" + ent + "}"
                     + ",required_player_range:12,target_cooldown_length:" + BOSS_COOLDOWN + "}");
         }
 

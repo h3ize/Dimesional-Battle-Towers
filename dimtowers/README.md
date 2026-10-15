@@ -52,6 +52,7 @@ Each theme uses its own wall/floor/pillar blocks, glass color, light source, arm
 - Enrages at 50% HP → permanent Speed II + Strength II, lightning strikes on the target
 - Minion waves at 75% / 40% / 15% HP (2 → 3 → 4 minions from that tower’s own mob list)
 - 3000 XP on kill
+- Bosses are confined to the top-floor arena (they cannot fly over the walls or fall down the stairwell) and always drop loot on death
 
 ## Floors (5)
 

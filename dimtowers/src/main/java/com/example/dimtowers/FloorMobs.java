@@ -134,38 +134,69 @@ public final class FloorMobs {
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
                     if (!(be instanceof TrialSpawnerBlockEntity)) continue;
                     CompoundTag tag = be.saveWithoutMetadata(level.registryAccess());
-                    if (!tag.toString().contains("dt_floor")) continue;
-                    FLOOR_SPAWNERS.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet()).add(be.getBlockPos().immutable());
+                    String text = tag.toString();
+                    boolean floor = text.contains("dt_floor");
+                    boolean boss = !floor && text.contains("dt_theme_");
+                    if (!floor && !boss) continue;
+                    BlockPos pos = be.getBlockPos().immutable();
                     boolean changed = false;
-                    if (tag.getInt("target_cooldown_length") != FLOOR_COOLDOWN) {
-                        tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
-                        changed = true;
+                    if (floor) {
+                        FLOOR_SPAWNERS.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet()).add(pos);
+                        if (tag.getInt("target_cooldown_length") != FLOOR_COOLDOWN) {
+                            tag.putInt("target_cooldown_length", FLOOR_COOLDOWN);
+                            changed = true;
+                        }
+                        if (tag.getInt("required_player_range") != FLOOR_RANGE) {
+                            tag.putInt("required_player_range", FLOOR_RANGE);
+                            changed = true;
+                        }
                     }
-                    if (tag.getInt("required_player_range") != FLOOR_RANGE) {
-                        tag.putInt("required_player_range", FLOOR_RANGE);
-                        changed = true;
-                    }
+                    String arena = "dt_arena_" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ();
+                    CompoundTag firstData = null;
                     for (String key : new String[]{"normal_config", "ominous_config"}) {
                         if (!tag.contains(key, Tag.TAG_COMPOUND)) continue;
                         CompoundTag cfg = tag.getCompound(key);
                         ListTag pots = cfg.getList("spawn_potentials", Tag.TAG_COMPOUND);
                         for (int j = 0; j < pots.size(); j++) {
-                            CompoundTag entity = pots.getCompound(j).getCompound("data").getCompound("entity");
-                            if (entity.getString("id").equals("minecraft:creeper")) {
+                            CompoundTag data = pots.getCompound(j).getCompound("data");
+                            CompoundTag entity = data.getCompound("entity");
+                            if (floor && entity.getString("id").equals("minecraft:creeper")) {
                                 entity.putString("id", "minecraft:zombie");
                                 changed = true;
                             }
+                            if (boss && addArenaTag(entity, arena)) changed = true;
+                            if (firstData == null && entity.contains("id", Tag.TAG_STRING)) firstData = data;
                         }
-                        if (cfg.getInt("ticks_between_spawn") != FLOOR_SPAWN_TICKS) {
+                        if (floor && cfg.getInt("ticks_between_spawn") != FLOOR_SPAWN_TICKS) {
                             cfg.putInt("ticks_between_spawn", FLOOR_SPAWN_TICKS);
                             changed = true;
                         }
                     }
+                    CompoundTag current = tag.getCompound("spawn_data").getCompound("entity");
+                    if (!current.contains("id", Tag.TAG_STRING)) {
+                        if (firstData != null) {
+                            tag.put("spawn_data", firstData.copy());
+                            changed = true;
+                        }
+                    } else if (boss && addArenaTag(current, arena)) {
+                        changed = true;
+                    }
                     if (!changed) continue;
                     be.loadWithComponents(tag, level.registryAccess());
                     be.setChanged();
+                    BlockState state = level.getBlockState(pos);
+                    level.sendBlockUpdated(pos, state, state, 3);
                 }
             } catch (Exception ignored) { }
         });
+    }
+
+    private static boolean addArenaTag(CompoundTag entity, String arena) {
+        if (!entity.getString("id").startsWith("dimtowers:")) return false;
+        ListTag tags = entity.getList("Tags", Tag.TAG_STRING);
+        for (int i = 0; i < tags.size(); i++) if (tags.getString(i).startsWith("dt_arena_")) return false;
+        tags.add(net.minecraft.nbt.StringTag.valueOf(arena));
+        entity.put("Tags", tags);
+        return true;
     }
 }

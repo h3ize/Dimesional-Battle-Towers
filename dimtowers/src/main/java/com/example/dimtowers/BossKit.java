@@ -50,7 +50,18 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
 public final class BossKit {
     private BossKit() {}
@@ -170,8 +181,49 @@ public final class BossKit {
         for (ServerPlayer p : sl.players()) if (p.distanceToSqr(boss) < 64.0 * 64.0) p.displayClientMessage(msg, true);
     }
 
+    private static final double ARENA_HALF = 14.0;
+
+    private static void confine(Mob mob) {
+        var data = mob.getPersistentData();
+        if (!data.contains("dt_hx")) {
+            double hx = mob.getX(), hy = mob.getY(), hz = mob.getZ(), half = 9.0, below = 3.0;
+            for (String s : mob.getTags()) {
+                if (!s.startsWith("dt_arena_")) continue;
+                String[] p = s.substring(9).split("_");
+                if (p.length != 3) continue;
+                try {
+                    hx = Integer.parseInt(p[0]) + 0.5;
+                    hy = Integer.parseInt(p[1]);
+                    hz = Integer.parseInt(p[2]) + 0.5;
+                    half = ARENA_HALF;
+                    below = 1.5;
+                } catch (NumberFormatException ignored) { }
+                break;
+            }
+            data.putDouble("dt_hx", hx);
+            data.putDouble("dt_hy", hy);
+            data.putDouble("dt_hz", hz);
+            data.putDouble("dt_half", half);
+            data.putDouble("dt_below", below);
+        }
+        double hx = data.getDouble("dt_hx"), hy = data.getDouble("dt_hy"), hz = data.getDouble("dt_hz");
+        double half = data.getDouble("dt_half"), below = data.getDouble("dt_below");
+        double x = mob.getX(), y = mob.getY(), z = mob.getZ();
+        boolean fell = y < hy - below;
+        boolean outside = Math.abs(x - hx) > half || Math.abs(z - hz) > half || y > hy + 8.0;
+        if (!fell && !outside) return;
+        double nx = fell ? hx : Mth.clamp(x, hx - half + 1.0, hx + half - 1.0);
+        double nz = fell ? hz : Mth.clamp(z, hz - half + 1.0, hz + half - 1.0);
+        double ny = fell ? hy : Mth.clamp(y, hy - below, hy + 8.0);
+        mob.moveTo(nx, ny, nz, mob.getYRot(), mob.getXRot());
+        mob.setDeltaMovement(Vec3.ZERO);
+        mob.fallDistance = 0f;
+        mob.getNavigation().stop();
+    }
+
     public static void tick(Mob mob) {
         if (!(mob.level() instanceof ServerLevel sl)) return;
+        confine(mob);
         if (mob.tickCount % 20 == 0 && !mob.getTags().contains("dt_nogear")) {
             ItemStack h = mob.getItemBySlot(EquipmentSlot.HEAD);
             if (h.isEmpty() || h.getDamageValue() > 0) mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
@@ -262,6 +314,54 @@ public final class BossKit {
         }
         List<Vex> vexes = sl.getEntitiesOfClass(Vex.class, dead.getBoundingBox().inflate(64), v -> v.getOwner() == dead);
         for (Vex v : vexes) v.discard();
+    }
+
+    public static void onLivingDrops(LivingDropsEvent event) {
+        LivingEntity dead = event.getEntity();
+        if (!(dead.level() instanceof ServerLevel sl) || !isTowerBoss(dead)) return;
+        if (!sl.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) return;
+        if (!event.getDrops().isEmpty()) return;
+
+        double ax = dead.getX(), ay = dead.getY(), az = dead.getZ();
+        var data = dead.getPersistentData();
+        if (data.contains("dt_hx")) {
+            double hx = data.getDouble("dt_hx"), hy = data.getDouble("dt_hy"), hz = data.getDouble("dt_hz");
+            double half = data.getDouble("dt_half");
+            if (Math.abs(ax - hx) > half + 2.0 || Math.abs(az - hz) > half + 2.0 || ay < hy - 3.0 || ay > hy + 10.0) {
+                ax = hx; ay = hy + 0.5; az = hz;
+            }
+        }
+        for (ItemStack stack : rollBossLoot(sl, dead, event.getSource())) {
+            if (stack.isEmpty()) continue;
+            ItemEntity item = new ItemEntity(sl, ax, ay + 0.5, az, stack);
+            item.setDefaultPickUpDelay();
+            event.getDrops().add(item);
+        }
+    }
+
+    private static List<ItemStack> rollBossLoot(ServerLevel sl, LivingEntity dead, DamageSource source) {
+        LootParams params = new LootParams.Builder(sl)
+                .withParameter(LootContextParams.THIS_ENTITY, dead)
+                .withParameter(LootContextParams.ORIGIN, dead.position())
+                .withParameter(LootContextParams.DAMAGE_SOURCE, source)
+                .create(LootContextParamSets.ENTITY);
+        List<ResourceKey<LootTable>> keys = List.of(dead.getType().getDefaultLootTable(),
+                ResourceKey.create(Registries.LOOT_TABLE,
+                        ResourceLocation.fromNamespaceAndPath(DimensionalBattleTowers.MOD_ID, "entities/tower_boss")));
+        for (ResourceKey<LootTable> key : keys) {
+            try {
+                List<ItemStack> items = new ArrayList<>(sl.getServer().reloadableRegistries().getLootTable(key).getRandomItems(params));
+                items.removeIf(ItemStack::isEmpty);
+                if (!items.isEmpty()) return items;
+            } catch (Exception ignored) { }
+        }
+        List<ItemStack> fallback = new ArrayList<>();
+        fallback.add(new ItemStack(Items.NETHERITE_INGOT, 3 + dead.getRandom().nextInt(4)));
+        fallback.add(new ItemStack(Items.DIAMOND, 12 + dead.getRandom().nextInt(13)));
+        fallback.add(new ItemStack(Items.ENCHANTED_GOLDEN_APPLE, 2));
+        fallback.add(new ItemStack(Items.TOTEM_OF_UNDYING));
+        fallback.add(new ItemStack(Items.EXPERIENCE_BOTTLE, 32));
+        return fallback;
     }
 
     public static class HoverGoal extends Goal {
