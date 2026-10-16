@@ -314,16 +314,25 @@ public final class BossKit {
         }
         List<Vex> vexes = sl.getEntitiesOfClass(Vex.class, dead.getBoundingBox().inflate(64), v -> v.getOwner() == dead);
         for (Vex v : vexes) v.discard();
+        // Drop the boss loot right here, so it never depends on who or what delivered the killing blow.
+        dropBossLoot(sl, dead, event.getSource());
     }
+
+    private static final String LOOT_DONE = "dt_loot_done";
 
     public static void onLivingDrops(LivingDropsEvent event) {
         LivingEntity dead = event.getEntity();
         if (!(dead.level() instanceof ServerLevel sl) || !isTowerBoss(dead)) return;
+        dropBossLoot(sl, dead, event.getSource());
+        event.getDrops().clear();
+    }
+    private static void dropBossLoot(ServerLevel sl, LivingEntity dead, DamageSource source) {
+        var data = dead.getPersistentData();
+        if (data.getBoolean(LOOT_DONE)) return;
+        data.putBoolean(LOOT_DONE, true);
         if (!sl.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) return;
-        if (!event.getDrops().isEmpty()) return;
 
         double ax = dead.getX(), ay = dead.getY(), az = dead.getZ();
-        var data = dead.getPersistentData();
         if (data.contains("dt_hx")) {
             double hx = data.getDouble("dt_hx"), hy = data.getDouble("dt_hy"), hz = data.getDouble("dt_hz");
             double half = data.getDouble("dt_half");
@@ -331,11 +340,12 @@ public final class BossKit {
                 ax = hx; ay = hy + 0.5; az = hz;
             }
         }
-        for (ItemStack stack : rollBossLoot(sl, dead, event.getSource())) {
+        for (ItemStack stack : rollBossLoot(sl, dead, source)) {
             if (stack.isEmpty()) continue;
             ItemEntity item = new ItemEntity(sl, ax, ay + 0.5, az, stack);
             item.setDefaultPickUpDelay();
-            event.getDrops().add(item);
+            item.setInvulnerable(true); // fire, lava and explosions can't destroy boss loot before it is picked up
+            sl.addFreshEntity(item);
         }
     }
 

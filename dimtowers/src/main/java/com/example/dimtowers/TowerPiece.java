@@ -37,6 +37,7 @@ import java.util.Set;
 
 public class TowerPiece extends StructurePiece {
     static final int H = 12;
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
     static final int FLOORS = 5;
     static final int R = 17;
     static final int I = R - 2;
@@ -72,6 +73,8 @@ public class TowerPiece extends StructurePiece {
         this.cz = tag.getInt("CZ");
         this.s0 = tag.getInt("S0");
     }
+
+    String themeId() { return themeId; }
 
     @Override
     protected void addAdditionalSaveData(StructurePieceSerializationContext ctx, CompoundTag tag) {
@@ -241,11 +244,16 @@ public class TowerPiece extends StructurePiece {
 
         void blockEntityNbt(BlockPos pos, String snbt) {
             BlockEntity be = level.getBlockEntity(pos);
-            if (be == null) return;
+            if (be == null) {
+                LOG.error("dimtowers: no block entity at {} to apply config {}", pos, snbt);
+                return;
+            }
             try {
                 be.loadWithComponents(TagParser.parseTag(snbt), level.registryAccess());
                 be.setChanged();
-            } catch (Exception ignored) { }
+            } catch (Exception ex) {
+                LOG.error("dimtowers: failed to apply block entity data at {}: {}", pos, snbt, ex);
+            }
         }
 
         String weaponFor(EntityType<?> type, int k, boolean diamond) {

@@ -27,6 +27,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.minecraft.world.level.saveddata.maps.MapDecorationType;
 import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -107,8 +108,8 @@ public class DimensionalBattleTowers {
         OminousKey.ITEMS.register(modBus);
         modBus.addListener(this::attributes);
         modBus.addListener(this::creativeTabs);
-        NeoForge.EVENT_BUS.addListener(BossKit::onLivingDeath);
-        NeoForge.EVENT_BUS.addListener(BossKit::onLivingDrops);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, BossKit::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, BossKit::onLivingDrops);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);

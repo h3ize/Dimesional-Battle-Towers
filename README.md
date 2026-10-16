@@ -52,12 +52,13 @@ Each theme uses its own wall/floor/pillar blocks, glass color, light source, arm
 - Enrages at 50% HP → permanent Speed II + Strength II, lightning strikes on the target
 - Minion waves at 75% / 40% / 15% HP (2 → 3 → 4 minions from that tower’s own mob list)
 - 3000 XP on kill
+- Bosses are confined to the top-floor arena (they cannot fly over the walls or fall down the stairwell) and always drop loot on death
 
 ## Floors (5)
 
 | Floor | Identity | Spawner |
 | ----- | -------- | ------- |
-| 1 | Armory — candle tables, supply barrels, vault straight ahead of the entrance | Trial Spawner, 6 mobs, one type |
+| 1 | Armory — candle tables, supply barrels, vault beside the entrance door | Trial Spawner, 6 mobs, one type |
 | 2 | Library — lecterns, desks, bookshelf stacks, chiseled bookshelves | Trial Spawner, 8 mobs, one type |
 | 3 | Trophy hall — mob heads on pedestals between candlesticks, infested bricks | Trial Spawner, 10 mobs, one type |
 | 4 | Treasury — decorated pots, theme-loot chests | Trial Spawner, 12 mobs, one type |
@@ -72,6 +73,7 @@ Floor mobs scale with the floor: lower floors use the weaker half of the theme�
 - 2–3 guaranteed trim templates
 - Guaranteed named weapon and named chestplate for that theme
 - 40% chance of an extra enchanted netherite piece
+- 1% chance of a random netherite sword, pickaxe, axe or shovel enchanted to the maximum level of every compatible enchantment on the server (curses and silk touch excluded)
 
 **Boss drops**
 - 6–9 rolls with larger stacks
@@ -80,17 +82,19 @@ Floor mobs scale with the floor: lower floors use the weaker half of the theme�
 - Guaranteed enchanted golden apple + netherite ingot
 - 3000 XP
 
-Named items carry the gold lore line: “Taken from a Dimensional Battle Tower.”
-
 **Floor vaults** (all five floors) — smaller per-theme table with a chance at the theme’s trim template.
 
 **Top-floor chests** — five per side wall; the middle three use the theme loot, the outer two (1st and 5th) randomly roll village blacksmith or end city loot.
+
+**Treasury chests** — end city treasure + theme trim template + named gear (no maps).
 
 **Tower Maps** — sold by Cartographer villagers (Journeyman trade: 20 emeralds + compass). Points to the nearest tower via the `dimtowers:towers` structure tag.
 
 ## Carry On
 
 If Carry On is installed, tower bosses are added to its entity blacklist (`carryon:entity_blacklist`) so they cannot be picked up. Carry On removes a carried mob from the world, and a Trial Spawner treats a missing mob as dead and ejects its key.
+
+Floor trial spawners refill killed mobs almost instantly (2 ticks between spawns), so two or more missing mobs come back together.
 
 ## Advancements
 

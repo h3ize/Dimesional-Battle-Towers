@@ -21,8 +21,8 @@
   "advancement.dimtowers.explorer.title": "Tower Cartographer",
   "advancement.dimtowers.explorer.description": "Visit every kind of Dimensional Battle Tower.",
   "advancement.dimtowers.vault_master.title": "Master Key",
-  "advancement.dimtowers.vault_master.description": "Open a Dimensional Battle Tower boss vault with a Dimensional Tower Ominous Key.",
-  "item.dimtowers.dimensional_tower_ominous_key": "Dimensional Tower Ominous Key",
+  "advancement.dimtowers.vault_master.description": "Open a Dimensional Battle Tower boss vault with a Dimensional Battle Tower Ominous Key.",
+  "item.dimtowers.dimensional_tower_ominous_key": "Dimensional Battle Tower Ominous Key",
   "entity.dimtowers.tower_guardian": "Abyssal Sentinel",
   "entity.dimtowers.tower_evoker": "Arch-Conjurer",
   "entity.dimtowers.tower_ravager": "Siege Beast"
