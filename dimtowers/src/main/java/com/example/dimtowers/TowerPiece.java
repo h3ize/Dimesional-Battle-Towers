@@ -305,7 +305,7 @@ public class TowerPiece extends StructurePiece {
             String config = "{spawn_range:6,total_mobs:" + TRIAL_TOTAL[k] + ".0f,simultaneous_mobs:" + TRIAL_SIMUL[k]
                     + ".0f,total_mobs_added_per_player:3.0f,simultaneous_mobs_added_per_player:1.0f,ticks_between_spawn:" + FloorMobs.FLOOR_SPAWN_TICKS + ","
                     + "spawn_potentials:[" + floorPotentials(type, k) + "],"
-                    + "loot_tables_to_eject:[{weight:1,data:'minecraft:spawners/trial_chamber/key'}]}";
+                    + "loot_tables_to_eject:[{weight:1,data:'dimtowers:spawners/floor_key'}]}";
             blockEntityNbt(p, "{normal_config:" + config + ",ominous_config:" + config
                     + ",spawn_data:{entity:" + mobNbt(type, k, -1) + "}"
                     + ",required_player_range:" + FloorMobs.FLOOR_RANGE + ",target_cooldown_length:" + SPAWNER_COOLDOWN + "}");

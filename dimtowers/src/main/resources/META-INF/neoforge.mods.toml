@@ -3,7 +3,7 @@ loaderVersion="[1,)"
 license="MIT"
 [[mods]]
 modId="dimtowers"
-version="1.0.0"
+version="1.1.0"
 displayName="Dimensional Battle Towers"
 authors="AJ"
 description='''Dimensional Battle Towers adds huge, themed boss towers to the world. Climb five floors of spawners, loot and decorated halls, then face a boss at the top and claim the vault.

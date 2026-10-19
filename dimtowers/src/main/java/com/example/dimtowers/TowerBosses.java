@@ -193,7 +193,7 @@ class TowerVindicator extends Vindicator {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.CHARGE, BossKit.Move.WAR_CRY, BossKit.Move.BLINK, BossKit.Move.GROUND_SLAM, BossKit.Move.SHIELD));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.LEAP, BossKit.Move.CHARGE, BossKit.Move.WAR_CRY, BossKit.Move.GROUND_SLAM, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     protected void registerBossGoals() { }
@@ -464,7 +464,7 @@ class TowerEnder extends EnderMan {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.BLINK, BossKit.Move.DRAGON_BREATH, BossKit.Move.PULL, BossKit.Move.CURSE, BossKit.Move.STORM_CALL, BossKit.Move.SHIELD));
+        this.goalSelector.addGoal(2, new BossKit.SignatureGoal(this, BossKit.Move.DRAGON_BREATH, BossKit.Move.PULL, BossKit.Move.CURSE, BossKit.Move.STORM_CALL, BossKit.Move.SHIELD));
         this.registerBossGoals();
     }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bossEvent.addPlayer(p); }

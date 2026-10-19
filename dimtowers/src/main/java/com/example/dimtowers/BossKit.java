@@ -76,7 +76,6 @@ public final class BossKit {
         LEAP,
         BLAZE_BARRAGE,
         FIRE_NOVA,
-        BLINK,
         DRAGON_BREATH,
         TRIDENT_FAN,
         FANG_WAVE,
@@ -98,10 +97,10 @@ public final class BossKit {
         METEOR
     }
 
-    public static final double DMG_ZOMBIE = 20.0, DMG_SKELETON = 12.0, DMG_WITHER = 20.0, DMG_PIGLIN = 22.0,
-            DMG_VINDICATOR = 22.0, DMG_BLAZE = 16.0, DMG_ENDER = 24.0, DMG_SLIME = 20.0,
-            DMG_DROWNED = 22.0, DMG_GUARDIAN = 22.0, DMG_EVOKER = 18.0, DMG_RAVAGER = 26.0;
-    public static final double HEALTH = 750.0;
+    public static final double DMG_ZOMBIE = 23.0, DMG_SKELETON = 14.0, DMG_WITHER = 23.0, DMG_PIGLIN = 25.0,
+            DMG_VINDICATOR = 25.0, DMG_BLAZE = 18.0, DMG_ENDER = 28.0, DMG_SLIME = 23.0,
+            DMG_DROWNED = 25.0, DMG_GUARDIAN = 25.0, DMG_EVOKER = 21.0, DMG_RAVAGER = 30.0;
+    public static final double HEALTH = 900.0;
     public static final int XP = 3000;
 
     public static AttributeSupplier.Builder boost(AttributeSupplier.Builder b, double damage) {
@@ -229,9 +228,9 @@ public final class BossKit {
             if (h.isEmpty() || h.getDamageValue() > 0) mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
         }
         float frac = mob.getHealth() / mob.getMaxHealth();
-        if (frac <= 0.75f) wave(mob, sl, "dt_wave1", 4, 0);
-        if (frac <= 0.40f) wave(mob, sl, "dt_wave2", 5, 1);
-        if (frac <= 0.15f) wave(mob, sl, "dt_wave3", 6, 2);
+        if (frac <= 0.75f) wave(mob, sl, "dt_wave1", 5, 0);
+        if (frac <= 0.40f) wave(mob, sl, "dt_wave2", 6, 1);
+        if (frac <= 0.15f) wave(mob, sl, "dt_wave3", 7, 2);
         if (frac <= 0.5f && !mob.getTags().contains("dt_enraged")) {
             mob.addTag("dt_enraged");
             mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, MobEffectInstance.INFINITE_DURATION, 1, false, true));
@@ -267,7 +266,6 @@ public final class BossKit {
             spawnMinion(sl, boss, pool.get(boss.getRandom().nextInt(pool.size())), boostLevel);
         }
         sl.playSound(null, boss.blockPosition(), SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 2.0f, 0.8f);
-        announce(sl, boss, "message.dimtowers.wave");
     }
 
     @Nullable
@@ -344,6 +342,7 @@ public final class BossKit {
             if (stack.isEmpty()) continue;
             ItemEntity item = new ItemEntity(sl, ax, ay + 0.5, az, stack);
             item.setDefaultPickUpDelay();
+            item.setGlowingTag(true); // white outline so the loot is easy to spot
             item.setInvulnerable(true); // fire, lava and explosions can't destroy boss loot before it is picked up
             sl.addFreshEntity(item);
         }
@@ -667,12 +666,6 @@ public final class BossKit {
                     cd[i] = enraged ? 200 : 320;
                     return true;
                 }
-                case BLINK -> {
-                    if (d2 < 49) return false;
-                    blink(sl, t);
-                    cd[i] = enraged ? 70 : 110;
-                    return true;
-                }
                 default -> { }
             }
 
@@ -911,23 +904,6 @@ public final class BossKit {
             }
             sl.sendParticles(ParticleTypes.EXPLOSION, c.x, c.y + 0.5, c.z, 6, radius * 0.3, 0.2, radius * 0.3, 0.0);
             sound(sl, SoundEvents.IRON_GOLEM_ATTACK, 2.0f, 0.5f);
-        }
-
-        private void blink(ServerLevel sl, LivingEntity t) {
-            RandomSource r = boss.getRandom();
-            for (int a = 0; a < 10; a++) {
-                double ang = r.nextDouble() * Math.PI * 2;
-                double nx = t.getX() + Math.cos(ang) * 2.5, nz = t.getZ() + Math.sin(ang) * 2.5;
-                AABB bb = boss.getBoundingBox().move(nx - boss.getX(), t.getY() - boss.getY(), nz - boss.getZ());
-                if (!sl.noCollision(boss, bb)) continue;
-                sl.sendParticles(ParticleTypes.PORTAL, boss.getX(), boss.getY(1.0), boss.getZ(), 40, 0.5, 1.0, 0.5, 0.3);
-                boss.moveTo(nx, t.getY(), nz, boss.getYRot(), boss.getXRot());
-                boss.getNavigation().stop();
-                boss.getLookControl().setLookAt(t, 30f, 30f);
-                sl.sendParticles(ParticleTypes.PORTAL, nx, boss.getY(1.0), nz, 40, 0.5, 1.0, 0.5, 0.3);
-                sound(sl, SoundEvents.ENDERMAN_TELEPORT, 2.0f, 0.6f);
-                break;
-            }
         }
 
         private void fan(Level level, LivingEntity t, int n, float step, Proj p) {

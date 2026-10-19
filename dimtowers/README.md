@@ -105,3 +105,11 @@ Floor trial spawners refill killed mobs almost instantly (2 ticks between spawns
 | Master of the Towers   | Kill all 12 boss types                             |
 | Tower Cartographer     | Visit all 19 tower types                           |
 | Master Key             | Open a boss vault with a Dimensional Tower Ominous Key |
+## Changes in this version
+
+- Bosses no longer have the Blink (teleport) move. Floor mobs, minions and bosses can't teleport like Endermen.
+- Enchanted books from loot never carry enchantments with "error" or "illegal" in their name.
+- Floor spawners and boss spawners have a 1% chance to eject 2 keys instead of 1 (`dimtowers:spawners/floor_key` and `boss_key`).
+- Boss loot drops glow with a white outline.
+- Removed the "summoned minions" message and Breezes from the mob pools.
+- Bosses are a bit tougher: +20% health (900), about +15% damage and one extra minion per wave.

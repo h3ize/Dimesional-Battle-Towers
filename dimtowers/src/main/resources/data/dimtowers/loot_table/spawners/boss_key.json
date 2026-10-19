@@ -9,6 +9,21 @@
           "name": "dimtowers:dimensional_tower_ominous_key"
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.01
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "dimtowers:dimensional_tower_ominous_key"
+        }
+      ]
     }
   ]
 }

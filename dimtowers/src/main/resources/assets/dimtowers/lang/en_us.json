@@ -15,7 +15,6 @@
   "entity.dimtowers.tower_slime": "Slime King",
   "entity.dimtowers.tower_drowned": "Tidal Tyrant",
   "filled_map.dimtowers.tower": "Dimensional Battle Tower Map",
-  "message.dimtowers.wave": "%s has summoned minions!",
   "message.dimtowers.enrage": "%s is enraged!",
   "message.dimtowers.desperate": "%s is making a last stand!",
   "advancement.dimtowers.explorer.title": "Tower Cartographer",

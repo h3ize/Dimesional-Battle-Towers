@@ -54,6 +54,11 @@ public class DimensionalBattleTowers {
 
     public static final DeferredRegister<LootItemFunctionType<?>> LOOT_FUNCTIONS =
             DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, MOD_ID);
+    public static final DeferredRegister<com.mojang.serialization.MapCodec<? extends net.neoforged.neoforge.common.loot.IGlobalLootModifier>> LOOT_MODIFIERS =
+            DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, MOD_ID);
+    public static final DeferredHolder<com.mojang.serialization.MapCodec<? extends net.neoforged.neoforge.common.loot.IGlobalLootModifier>,
+            com.mojang.serialization.MapCodec<StripBannedEnchantsModifier>> STRIP_BANNED_ENCHANTS =
+            LOOT_MODIFIERS.register("strip_banned_enchants", () -> StripBannedEnchantsModifier.CODEC);
     public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<MaxEnchantFunction>> MAX_ENCHANT =
             LOOT_FUNCTIONS.register("max_enchant", () -> new LootItemFunctionType<>(MaxEnchantFunction.CODEC));
 
@@ -104,6 +109,7 @@ public class DimensionalBattleTowers {
         STRUCTURE_TYPES.register(modBus);
         PIECE_TYPES.register(modBus);
         LOOT_FUNCTIONS.register(modBus);
+        LOOT_MODIFIERS.register(modBus);
         ENTITIES.register(modBus);
         OminousKey.ITEMS.register(modBus);
         modBus.addListener(this::attributes);
@@ -112,6 +118,7 @@ public class DimensionalBattleTowers {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, BossKit::onLivingDrops);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onJoin);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onTick);
+        NeoForge.EVENT_BUS.addListener(FloorMobs::onEnderTeleport);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onChunkLoad);
         NeoForge.EVENT_BUS.addListener(FloorMobs::onLevelTick);
         NeoForge.EVENT_BUS.addListener(this::villagerTrades);

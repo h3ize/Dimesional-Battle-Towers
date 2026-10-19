@@ -34,6 +34,7 @@ import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 public final class FloorMobs {
@@ -46,6 +47,13 @@ public final class FloorMobs {
         AttributeInstance follow = mob.getAttribute(Attributes.FOLLOW_RANGE);
         if (follow != null && follow.getBaseValue() < RANGE) follow.setBaseValue(RANGE);
         mob.setPersistenceRequired();
+    }
+    public static void onEnderTeleport(EntityTeleportEvent.EnderEntity e) {
+        if (!(e.getEntity() instanceof Mob mob)) return;
+        boolean towerMob = mob.getTags().contains("dt_floor") || mob.getTags().contains("dt_minion")
+                || net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType())
+                        .getNamespace().equals(DimensionalBattleTowers.MOD_ID);
+        if (towerMob) e.setCanceled(true);
     }
 
     public static void onTick(EntityTickEvent.Post e) {
@@ -151,6 +159,19 @@ public final class FloorMobs {
                             changed = true;
                         }
                     }
+                    if (floor) {
+                        for (String key : new String[]{"normal_config", "ominous_config"}) {
+                            if (!tag.contains(key, Tag.TAG_COMPOUND)) continue;
+                            ListTag eject = tag.getCompound(key).getList("loot_tables_to_eject", Tag.TAG_COMPOUND);
+                            for (int j = 0; j < eject.size(); j++) {
+                                CompoundTag entry = eject.getCompound(j);
+                                if (entry.getString("data").equals("minecraft:spawners/trial_chamber/key")) {
+                                    entry.putString("data", "dimtowers:spawners/floor_key");
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
                     String arena = "dt_arena_" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ();
                     CompoundTag firstData = null;
                     for (String key : new String[]{"normal_config", "ominous_config"}) {
@@ -160,6 +181,10 @@ public final class FloorMobs {
                         for (int j = 0; j < pots.size(); j++) {
                             CompoundTag data = pots.getCompound(j).getCompound("data");
                             CompoundTag entity = data.getCompound("entity");
+                            if (floor && entity.getString("id").equals("minecraft:breeze")) {
+                                entity.putString("id", "minecraft:zombie");
+                                changed = true;
+                            }
                             if (floor && entity.getString("id").equals("minecraft:creeper")) {
                                 entity.putString("id", "minecraft:zombie");
                                 changed = true;
